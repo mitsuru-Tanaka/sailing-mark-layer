@@ -2,215 +2,322 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>マークレイヤー</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mark Layer</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="マークレイヤー">
-<meta name="theme-color" content="#007AFF">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mark Layer">
+<meta name="theme-color" content="#0A2540">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,sans-serif;background:#f2f2f7;color:#1c1c1e;}
-.header{background:white;border-bottom:1px solid #e5e5ea;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-.header h1{font-size:17px;font-weight:700;}
-.tabs{display:flex;background:white;border-bottom:1px solid #e5e5ea;}
-.tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;color:#8e8e93;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;}
-.tab.active{color:#007AFF;border-bottom-color:#007AFF;font-weight:600;}
-.section{background:white;margin:10px 12px;border-radius:12px;overflow:hidden;}
-.sec-title{padding:10px 16px 4px;font-size:12px;color:#8e8e93;font-weight:600;letter-spacing:0.5px;}
-.row{padding:12px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;justify-content:space-between;}
-.row:last-child{border-bottom:none;}
-.row-val{font-size:15px;color:#007AFF;font-weight:500;}
-.radio-item{padding:13px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer;}
-.radio-item:last-child{border-bottom:none;}
-.radio-item input[type=radio]{width:22px;height:22px;accent-color:#007AFF;}
-.radio-item label{font-size:15px;cursor:pointer;}
-.inp-row{padding:9px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:8px;}
-.inp-row:last-child{border-bottom:none;}
-.lbl{font-size:14px;color:#555;min-width:128px;flex-shrink:0;}
-.inp-row input,.inp-row select{border:1px solid #d1d1d6;border-radius:8px;padding:6px 10px;font-size:14px;flex:1;min-width:0;background:white;}
-.unit{font-size:13px;color:#8e8e93;min-width:22px;}
-.btn{display:block;width:calc(100% - 24px);margin:8px 12px;padding:14px;border-radius:12px;border:none;font-size:16px;font-weight:600;cursor:pointer;text-align:center;}
-.btn-blue{background:#007AFF;color:white;}
-.btn-gray{background:#f2f2f7;color:#1c1c1e;}
-.btn-green{background:#34C759;color:white;}
-#map{width:100%;height:calc(100vh - 250px);}
-.live{background:white;border-top:1px solid #e5e5ea;padding:8px 12px;}
-.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.lv-cell{background:#f0f6ff;border-radius:10px;padding:7px 10px;}
-.lv-lbl{font-size:10px;color:#555;margin-bottom:2px;}
-.lv-val{font-size:17px;font-weight:700;color:#007AFF;}
-.mark-table{width:100%;border-collapse:collapse;font-size:12px;}
-.mark-table th{background:#f5f5f5;padding:8px 6px;text-align:left;font-weight:600;font-size:11px;color:#555;border-bottom:1px solid #e5e5ea;}
-.mark-table td{padding:9px 6px;border-bottom:1px solid #f2f2f7;vertical-align:middle;}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-end;}
-.overlay.show{display:flex;}
-.ov-panel{background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
-.ov-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center;}
-.grp-label{padding:14px 16px 2px;font-size:11px;color:#8e8e93;font-weight:700;}
+:root{
+  --navy:#0A2540; --navy2:#143A5C; --ink:#0A2540; --paper:#EEF2F6; --card:#FFFFFF;
+  --line:#D4DEE7; --muted:#5C7185; --cyan:#00A3E0; --orange:#FF6B1A; --green:#00B368; --red:#E63946;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:var(--paper);color:var(--ink);overflow:hidden;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;}
 .hidden{display:none!important;}
+
+/* HOME */
+#home{justify-content:center;align-items:center;background:var(--navy);padding:24px;gap:18px;}
+.home-brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:6px;}
+.home-brand .logo{width:60px;height:60px;}
+.home-brand h1{color:#fff;font-size:26px;font-weight:800;letter-spacing:0.5px;}
+.home-brand p{color:#8FB3CC;font-size:13px;letter-spacing:2px;text-transform:uppercase;}
+.mode-card{width:100%;max-width:420px;background:var(--card);border-radius:20px;padding:22px;display:flex;align-items:center;gap:18px;cursor:pointer;border:2px solid transparent;transition:transform .1s;}
+.mode-card:active{transform:scale(0.98);}
+.mode-card .mc-icon{width:56px;height:56px;flex-shrink:0;border-radius:16px;display:flex;align-items:center;justify-content:center;}
+.mode-card .mc-icon.race{background:#FFE7D6;}
+.mode-card .mc-icon.prac{background:#D6F0FB;}
+.mode-card h2{font-size:21px;font-weight:800;}
+.mode-card p{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5;}
+
+/* TOP BAR */
+.topbar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));flex-shrink:0;}
+.topbar .back{background:rgba(255,255,255,0.12);border:none;color:#fff;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.topbar h2{font-size:18px;font-weight:800;flex:1;}
+.topbar .gps-pill{background:rgba(255,255,255,0.12);border:none;color:#fff;height:40px;padding:0 14px;border-radius:12px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer;}
+.topbar .gps-pill.on{background:var(--green);}
+.dot{width:9px;height:9px;border-radius:50%;background:#8FB3CC;}
+.gps-pill.on .dot{background:#fff;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* RACE tabs */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;}
+.tab{flex:1;padding:14px 4px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+.sec-title{padding:18px 18px 8px;font-size:12px;color:var(--muted);font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.card{background:var(--card);margin:0 14px 12px;border-radius:16px;overflow:hidden;border:1px solid var(--line);}
+.opt{padding:0;}
+.opt label{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;font-size:17px;font-weight:600;}
+.opt:last-child label{border-bottom:none;}
+.opt input[type=radio]{appearance:none;width:26px;height:26px;border:2px solid var(--line);border-radius:50%;flex-shrink:0;position:relative;}
+.opt input[type=radio]:checked{border-color:var(--cyan);}
+.opt input[type=radio]:checked::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--cyan);}
+.grp{padding:16px 18px 4px;font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1px;}
+
+.field{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.field:last-child{border-bottom:none;}
+.field .flbl{font-size:16px;color:var(--ink);font-weight:600;flex:1;min-width:0;}
+.field .funit{font-size:14px;color:var(--muted);min-width:26px;text-align:right;}
+.field input,.field select{font-size:19px;font-weight:700;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:120px;text-align:right;background:#F8FAFC;color:var(--ink);}
+.field select{width:auto;text-align:left;font-size:16px;}
+
+/* stepper */
+.stepper{display:flex;align-items:center;gap:0;}
+.stepper button{width:48px;height:52px;border:1.5px solid var(--line);background:#F8FAFC;font-size:26px;font-weight:700;color:var(--cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.stepper button:first-child{border-radius:12px 0 0 12px;}
+.stepper button:last-child{border-radius:0 12px 12px 0;}
+.stepper input{width:84px;border-left:none;border-right:none;border-radius:0;text-align:center;}
+
+.btn{display:block;width:calc(100% - 28px);margin:10px 14px;padding:18px;border-radius:16px;border:none;font-size:18px;font-weight:800;cursor:pointer;text-align:center;letter-spacing:0.5px;}
+.btn:active{transform:scale(0.98);}
+.btn-primary{background:var(--cyan);color:#fff;}
+.btn-orange{background:var(--orange);color:#fff;}
+.btn-ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line);}
+.btn-green{background:var(--green);color:#fff;}
+
+/* map */
+.mapwrap{position:relative;flex:1;}
+.mapwrap .lmap{position:absolute;inset:0;}
+.chartbar{position:absolute;top:10px;left:10px;right:10px;z-index:500;background:rgba(10,37,64,0.86);backdrop-filter:blur(8px);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:10px;color:#fff;}
+.chartbar span{font-size:12px;font-weight:700;white-space:nowrap;}
+.chartbar input[type=range]{flex:1;accent-color:var(--cyan);}
+
+/* practice HUD */
+.hud{position:absolute;top:10px;left:10px;right:10px;z-index:500;display:flex;gap:8px;}
+.hud .h-cell{flex:1;background:rgba(10,37,64,0.9);backdrop-filter:blur(8px);border-radius:14px;padding:10px 12px;color:#fff;}
+.hud .h-lbl{font-size:11px;color:#8FB3CC;font-weight:700;letter-spacing:0.5px;}
+.hud .h-val{font-size:26px;font-weight:800;line-height:1.1;margin-top:2px;}
+.hud .h-val small{font-size:14px;font-weight:700;color:#8FB3CC;}
+
+/* practice control dock */
+.dock{position:absolute;left:0;right:0;bottom:0;z-index:500;background:var(--card);border-top:1px solid var(--line);padding:14px 14px max(14px,env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(10,37,64,0.1);}
+.wind-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.wind-dial{width:56px;height:56px;flex-shrink:0;}
+.wind-info{flex:1;}
+.wind-info .wlbl{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0.5px;}
+.wind-info .wval{font-size:30px;font-weight:800;color:var(--navy);line-height:1;}
+.wind-info .wval small{font-size:16px;color:var(--orange);}
+.wind-steps{display:flex;gap:6px;}
+.wind-steps button{width:50px;height:50px;border-radius:14px;border:1.5px solid var(--line);background:#F8FAFC;font-size:20px;font-weight:800;color:var(--orange);cursor:pointer;}
+.wind-slider{width:100%;accent-color:var(--orange);margin-bottom:12px;height:30px;}
+.dock-btns{display:flex;gap:8px;}
+.dock-btns button{flex:1;padding:16px 8px;border-radius:14px;border:none;font-size:15px;font-weight:800;cursor:pointer;}
+.dock-btns button:active{transform:scale(0.97);}
+.b-mark{background:var(--orange);color:#fff;flex:2!important;}
+.b-undo{background:#F8FAFC;color:var(--ink);border:1.5px solid var(--line)!important;}
+.b-clear{background:#FCE8EA;color:var(--red);}
+
+/* mark table */
+.mtbl{width:100%;border-collapse:collapse;font-size:14px;}
+.mtbl th{background:#F1F5F9;padding:12px 8px;text-align:left;font-size:12px;color:var(--muted);font-weight:800;border-bottom:1px solid var(--line);}
+.mtbl td{padding:14px 8px;border-bottom:1px solid var(--line);}
+.chip{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;color:#fff;font-size:11px;font-weight:800;margin-right:6px;}
+
+/* sheet */
+.sheet{display:none;position:fixed;inset:0;background:rgba(10,37,64,0.5);z-index:900;align-items:flex-end;}
+.sheet.show{display:flex;}
+.sheet-panel{background:var(--card);border-radius:22px 22px 0 0;padding:22px;padding-bottom:max(22px,env(safe-area-inset-bottom));width:100%;}
+.sheet-panel h3{font-size:20px;font-weight:800;text-align:center;margin-bottom:18px;}
+.bignum{font-size:30px;font-weight:800;color:var(--cyan);}
+pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-space:pre-wrap;background:#F8FAFC;border-radius:12px;margin:0 14px;}
 </style>
 </head>
 <body>
-<div class="header">
-  <span style="font-size:22px;">&#9973;</span>
-  <h1>マークレイヤー</h1>
-  <button onclick="showGPSPanel()" style="border:none;background:none;font-size:22px;cursor:pointer;">&#128205;</button>
-</div>
-<div class="tabs">
-  <button class="tab active" onclick="showTab('course',this)">コース設定</button>
-  <button class="tab" onclick="showTab('map',this)">マップ</button>
-  <button class="tab" onclick="showTab('marks',this)">マーク一覧</button>
-  <button class="tab" onclick="showTab('share',this)">共有</button>
-</div>
 
-<!-- COURSE SETUP -->
-<div id="tab-course">
-  <p class="sec-title">コースタイプ</p>
-  <div class="section">
-    <p class="grp-label">レース用（スタートライン・フィニッシュあり）</p>
-    <div class="radio-item"><input type="radio" name="course" id="c-trapezoid" value="trapezoid" checked onchange="onCourseChange()"><label for="c-trapezoid">トラペゾイド</label></div>
-    <div class="radio-item"><input type="radio" name="course" id="c-triangle" value="triangle" onchange="onCourseChange()"><label for="c-triangle">トライアングル</label></div>
-    <div class="radio-item"><input type="radio" name="course" id="c-lr" value="lr" onchange="onCourseChange()"><label for="c-lr">上下（L/R）</label></div>
-    <div class="radio-item"><input type="radio" name="course" id="c-start" value="start" onchange="onCourseChange()"><label for="c-start">スタートラインのみ</label></div>
-    <p class="grp-label">練習用（スタートなし）</p>
-    <div class="radio-item"><input type="radio" name="course" id="c-wlo" value="wlo" onchange="onCourseChange()"><label for="c-wlo">上下のみ</label></div>
-    <div class="radio-item"><input type="radio" name="course" id="c-trio" value="trio" onchange="onCourseChange()"><label for="c-trio">トライアングルのみ</label></div>
-    <div class="radio-item"><input type="radio" name="course" id="c-trapo" value="trapo" onchange="onCourseChange()"><label for="c-trapo">トラペゾイドのみ</label></div>
+<!-- ============ HOME ============ -->
+<div id="home" class="screen">
+  <div class="home-brand">
+    <svg class="logo" viewBox="0 0 64 64" fill="none"><path d="M32 6 L52 50 H12 Z" fill="#00A3E0"/><path d="M32 6 L32 50 H12 Z" fill="#FF6B1A"/><rect x="28" y="48" width="8" height="10" rx="2" fill="#fff"/></svg>
+    <h1>MARK LAYER</h1>
+    <p>Sailing Course Tool</p>
   </div>
-
-  <!-- Trapezoid params (trapezoid & trapo) -->
-  <div id="sec-trap">
-    <p class="sec-title">トラペゾイド パラメーター</p>
-    <div class="section">
-      <div class="inp-row"><span class="lbl">距離の単位</span><select id="trap-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里=1852m）</option></select></div>
-      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="p-wind" value="0" min="0" max="359" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">1-4距離</span><input type="number" id="p-d14" value="700" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row"><span class="lbl">1-2距離比</span><input type="number" id="p-r12" value="66.7" step="0.1" oninput="recalc()"><span class="unit">%</span></div>
-      <div class="inp-row"><span class="lbl">2-3距離比</span><input type="number" id="p-r23" value="100" step="0.1" oninput="recalc()"><span class="unit">%</span></div>
-      <div class="inp-row"><span class="lbl">4-1-2内角</span><input type="number" id="p-r412" value="60" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">1-2-3内角</span><input type="number" id="p-r123" value="120" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row finrow"><span class="lbl">3-フィニッシュ距離</span><input type="number" id="p-fin" value="200" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row finrow"><span class="lbl">2-3-フィニッシュ内角</span><input type="number" id="p-r23f" value="120" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">ゲートマーク間隔</span><input type="number" id="p-gw" value="50" oninput="recalc()"><span class="unit udist">m</span></div>
-    </div>
+  <div class="mode-card" onclick="enterMode('race')">
+    <div class="mc-icon race"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF6B1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4l13 4-13 4"/><line x1="4" y1="21" x2="4" y2="3"/></svg></div>
+    <div><h2>レースモード</h2><p>本船から正確にコースを設計。全パラメーター入力・座標共有。</p></div>
   </div>
-
-  <!-- Triangle params (triangle & trio) -->
-  <div id="sec-tri" class="hidden">
-    <p class="sec-title">トライアングル パラメーター</p>
-    <div class="section">
-      <div class="inp-row"><span class="lbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里=1852m）</option></select></div>
-      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="t-wind" value="0" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">1-3距離</span><input type="number" id="t-d13" value="700" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row"><span class="lbl">3-1-2内角</span><input type="number" id="t-r312" value="60" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">1-2-3内角</span><input type="number" id="t-r123" value="60" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">ゲート幅</span><input type="number" id="t-gw" value="50" oninput="recalc()"><span class="unit udist">m</span></div>
-    </div>
-  </div>
-
-  <!-- LR params -->
-  <div id="sec-lr" class="hidden">
-    <p class="sec-title">上下（L/R） パラメーター</p>
-    <div class="section">
-      <div class="inp-row"><span class="lbl">距離の単位</span><select id="lr-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里=1852m）</option></select></div>
-      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="lr-wind" value="0" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">上-下距離</span><input type="number" id="lr-d" value="1500" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row"><span class="lbl">スタートライン幅</span><input type="number" id="lr-sw" value="150" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row"><span class="lbl">ゲート幅</span><input type="number" id="lr-gw" value="50" oninput="recalc()"><span class="unit udist">m</span></div>
-    </div>
-  </div>
-
-  <!-- Start params -->
-  <div id="sec-start" class="hidden">
-    <p class="sec-title">スタートライン パラメーター</p>
-    <div class="section">
-      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="s-wind" value="0" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">スタートライン幅</span><input type="number" id="s-sw" value="300" oninput="recalc()"><span class="unit">m</span></div>
-    </div>
-  </div>
-
-  <!-- WL only (practice) -->
-  <div id="sec-wlo" class="hidden">
-    <p class="sec-title">上下のみ（練習） パラメーター</p>
-    <div class="section">
-      <div class="inp-row"><span class="lbl">距離の単位</span><select id="wlo-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里=1852m）</option></select></div>
-      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="w-wind" value="0" oninput="recalc()"><span class="unit">°</span></div>
-      <div class="inp-row"><span class="lbl">上-下距離</span><input type="number" id="w-d" value="700" oninput="recalc()"><span class="unit udist">m</span></div>
-      <div class="inp-row"><span class="lbl">下ゲート幅</span><input type="number" id="w-gw" value="50" oninput="recalc()"><span class="unit udist">m</span></div>
-    </div>
-  </div>
-
-  <p class="sec-title">基準点 — 今いるマーク</p>
-  <div class="section">
-    <div class="inp-row"><span class="lbl">基準マーク</span>
-      <select id="refMark" onchange="recalc()"></select>
-    </div>
-    <div class="inp-row"><span class="lbl">北緯 (度)</span><input type="number" id="ref-latd" value="35" min="0" max="90" oninput="recalc()"><span class="unit">度</span></div>
-    <div class="inp-row"><span class="lbl">北緯 (分)</span><input type="number" id="ref-latm" value="17.38" step="0.0001" oninput="recalc()"><span class="unit">分</span></div>
-    <div class="inp-row"><span class="lbl">東経 (度)</span><input type="number" id="ref-lond" value="139" min="100" max="180" oninput="recalc()"><span class="unit">度</span></div>
-    <div class="inp-row"><span class="lbl">東経 (分)</span><input type="number" id="ref-lonm" value="30.60" step="0.0001" oninput="recalc()"><span class="unit">分</span></div>
-  </div>
-  <button class="btn btn-gray" onclick="useGPSAsRef()">&#128205; 現在位置 → 基準点に設定</button>
-  <button class="btn btn-blue" onclick="calcAndMap()">マーク位置を計算してマップ表示 →</button>
-  <div style="height:20px;"></div>
-</div>
-
-<!-- MAP -->
-<div id="tab-map" class="hidden">
-  <div style="background:white;border-bottom:1px solid #e5e5ea;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <span style="font-size:11px;color:#555;flex-shrink:0;">海面図の透過:</span>
-    <input type="range" id="pdf-opacity" min="0" max="100" value="55" style="flex:1;min-width:80px;" oninput="updatePDFOpacity(this.value)">
-    <span id="pdf-opacity-val" style="font-size:11px;color:#555;min-width:30px;">55%</span>
-    <span id="pdf-status" style="font-size:11px;color:#8e8e93;"></span>
-  </div>
-  <div id="map"></div>
-  <div class="live">
-    <div class="live-grid">
-      <div class="lv-cell"><div class="lv-lbl">基準点からの距離</div><div class="lv-val" id="lv-ref">—</div></div>
-      <div class="lv-cell"><div class="lv-lbl">GPS精度</div><div class="lv-val" id="lv-acc">—</div></div>
-      <div class="lv-cell"><div class="lv-lbl">最終マークまで距離</div><div class="lv-val" id="lv-dist">—</div></div>
-      <div class="lv-cell"><div class="lv-lbl">最終マークへ方位</div><div class="lv-val" id="lv-brng">—</div></div>
-    </div>
-    <div id="lv-cursor" style="margin-top:6px;font-size:11px;color:#555;text-align:center;min-height:16px;"></div>
+  <div class="mode-card" onclick="enterMode('practice')">
+    <div class="mc-icon prac"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00A3E0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+    <div><h2>練習モード</h2><p>地図を見ながら現在地をマーク。風軸ラインをライブ表示。</p></div>
   </div>
 </div>
 
-<!-- MARKS -->
-<div id="tab-marks" class="hidden">
-  <div style="overflow-x:auto;margin:10px 12px;">
-    <table class="mark-table" id="mark-table">
-      <tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr>
-    </table>
+<!-- ============ RACE ============ -->
+<div id="race" class="screen hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h2>レースモード</h2>
+    <button class="gps-pill" id="r-gps" onclick="toggleGPS()"><span class="dot"></span>GPS</button>
   </div>
-</div>
-
-<!-- SHARE -->
-<div id="tab-share" class="hidden">
-  <p class="sec-title">共有</p>
-  <button class="btn btn-green" onclick="shareToLINE()">LINEで送る</button>
-  <button class="btn btn-gray" onclick="copyCoords()">座標テキストをコピー</button>
-  <div class="section" style="margin-top:10px;">
-    <pre id="share-text" style="font-size:11px;color:#333;padding:12px;overflow-x:auto;line-height:1.6;white-space:pre-wrap;"></pre>
+  <div class="tabs">
+    <button class="tab active" onclick="raceTab('course',this)">コース</button>
+    <button class="tab" onclick="raceTab('map',this)">マップ</button>
+    <button class="tab" onclick="raceTab('list',this)">一覧</button>
+    <button class="tab" onclick="raceTab('share',this)">共有</button>
   </div>
-  <div style="height:20px;"></div>
-</div>
 
-<!-- GPS Overlay -->
-<div id="gps-overlay" class="overlay" onclick="hideGPSPanel(event)">
-  <div class="ov-panel" onclick="event.stopPropagation()">
-    <div class="ov-title">&#128205; GPS現在位置</div>
-    <div class="section" style="margin:0 0 12px;">
-      <div class="row"><span>北緯</span><span class="row-val" id="gp-lat">— 度 —.— 分</span></div>
-      <div class="row"><span>東経</span><span class="row-val" id="gp-lon">— 度 —.— 分</span></div>
-      <div class="row"><span>精度</span><span class="row-val" id="gp-acc">—</span></div>
+  <div id="rt-course" class="scroll">
+    <p class="sec-title">コースタイプ</p>
+    <div class="card">
+      <p class="grp">レース用（スタート・フィニッシュあり）</p>
+      <div class="opt"><label><input type="radio" name="course" value="trapezoid" checked onchange="onCourseChange()">トラペゾイド</label></div>
+      <div class="opt"><label><input type="radio" name="course" value="triangle" onchange="onCourseChange()">トライアングル</label></div>
+      <div class="opt"><label><input type="radio" name="course" value="lr" onchange="onCourseChange()">上下（L/R）</label></div>
+      <div class="opt"><label><input type="radio" name="course" value="start" onchange="onCourseChange()">スタートラインのみ</label></div>
+      <p class="grp">練習用（スタートなし）</p>
+      <div class="opt"><label><input type="radio" name="course" value="wlo" onchange="onCourseChange()">上下のみ</label></div>
+      <div class="opt"><label><input type="radio" name="course" value="trio" onchange="onCourseChange()">トライアングルのみ</label></div>
+      <div class="opt"><label><input type="radio" name="course" value="trapo" onchange="onCourseChange()">トラペゾイドのみ</label></div>
     </div>
-    <button class="btn btn-blue" onclick="useGPSAsRef()">現在位置 → 基準点に設定</button>
-    <button class="btn btn-gray" id="gps-toggle" onclick="toggleGPS()">GPS追跡 開始</button>
-    <button class="btn btn-gray" onclick="hideGPSPanel(null)">閉じる</button>
+
+    <div id="sec-trap">
+      <p class="sec-title">トラペゾイド</p>
+      <div class="card">
+        <div class="field"><span class="flbl">距離の単位</span><select id="trap-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('p-wind',-5,0,359,true)">−</button><input type="number" id="p-wind" value="0" oninput="recalc()"><button onclick="step('p-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">1-4距離</span><div class="stepper"><button onclick="step('p-d14',-50,0,99999)">−</button><input type="number" id="p-d14" value="700" oninput="recalc()"><button onclick="step('p-d14',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">1-2距離比</span><input type="number" id="p-r12" value="66.7" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
+        <div class="field"><span class="flbl">2-3距離比</span><input type="number" id="p-r23" value="100" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
+        <div class="field"><span class="flbl">4-1-2内角</span><input type="number" id="p-r412" value="60" oninput="recalc()"><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">1-2-3内角</span><input type="number" id="p-r123" value="120" oninput="recalc()"><span class="funit">°</span></div>
+        <div class="field finrow"><span class="flbl">3-Fin距離</span><input type="number" id="p-fin" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
+        <div class="field finrow"><span class="flbl">2-3-Fin内角</span><input type="number" id="p-r23f" value="120" oninput="recalc()"><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">ゲート間隔</span><input type="number" id="p-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
+      </div>
+    </div>
+
+    <div id="sec-tri" class="hidden">
+      <p class="sec-title">トライアングル</p>
+      <div class="card">
+        <div class="field"><span class="flbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('t-wind',-5,0,359,true)">−</button><input type="number" id="t-wind" value="0" oninput="recalc()"><button onclick="step('t-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">1-3距離</span><div class="stepper"><button onclick="step('t-d13',-50,0,99999)">−</button><input type="number" id="t-d13" value="700" oninput="recalc()"><button onclick="step('t-d13',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">3-1-2内角</span><input type="number" id="t-r312" value="60" oninput="recalc()"><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">1-2-3内角</span><input type="number" id="t-r123" value="60" oninput="recalc()"><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">ゲート幅</span><input type="number" id="t-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
+      </div>
+    </div>
+
+    <div id="sec-lr" class="hidden">
+      <p class="sec-title">上下（L/R）</p>
+      <div class="card">
+        <div class="field"><span class="flbl">距離の単位</span><select id="lr-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('lr-wind',-5,0,359,true)">−</button><input type="number" id="lr-wind" value="0" oninput="recalc()"><button onclick="step('lr-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">上-下距離</span><div class="stepper"><button onclick="step('lr-d',-100,0,99999)">−</button><input type="number" id="lr-d" value="1500" oninput="recalc()"><button onclick="step('lr-d',100,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">スタート幅</span><input type="number" id="lr-sw" value="150" oninput="recalc()"><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">ゲート幅</span><input type="number" id="lr-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
+      </div>
+    </div>
+
+    <div id="sec-start" class="hidden">
+      <p class="sec-title">スタートライン</p>
+      <div class="card">
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('s-wind',-5,0,359,true)">−</button><input type="number" id="s-wind" value="0" oninput="recalc()"><button onclick="step('s-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">スタート幅</span><input type="number" id="s-sw" value="300" oninput="recalc()"><span class="funit">m</span></div>
+      </div>
+    </div>
+
+    <div id="sec-wlo" class="hidden">
+      <p class="sec-title">上下のみ（練習）</p>
+      <div class="card">
+        <div class="field"><span class="flbl">距離の単位</span><select id="wlo-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('w-wind',-5,0,359,true)">−</button><input type="number" id="w-wind" value="0" oninput="recalc()"><button onclick="step('w-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">上-下距離</span><div class="stepper"><button onclick="step('w-d',-50,0,99999)">−</button><input type="number" id="w-d" value="700" oninput="recalc()"><button onclick="step('w-d',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">下ゲート幅</span><input type="number" id="w-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
+      </div>
+    </div>
+
+    <p class="sec-title">基準点 — 今いるマーク</p>
+    <div class="card">
+      <div class="field"><span class="flbl">基準マーク</span><select id="refMark" onchange="recalc()"></select></div>
+      <div class="field"><span class="flbl">北緯</span><input type="number" id="ref-latd" value="35" oninput="recalc()"><span class="funit">度</span><input type="number" id="ref-latm" value="17.38" step="0.0001" oninput="recalc()"><span class="funit">分</span></div>
+      <div class="field"><span class="flbl">東経</span><input type="number" id="ref-lond" value="139" oninput="recalc()"><span class="funit">度</span><input type="number" id="ref-lonm" value="30.60" step="0.0001" oninput="recalc()"><span class="funit">分</span></div>
+    </div>
+    <button class="btn btn-ghost" onclick="useGPSAsRef()">現在位置を基準点にする</button>
+    <button class="btn btn-primary" onclick="calcAndMap()">計算してマップ表示</button>
+    <div style="height:24px;"></div>
+  </div>
+
+  <div id="rt-map" class="mapwrap hidden">
+    <div id="rmap" class="lmap"></div>
+    <div class="chartbar">
+      <span>海面図</span>
+      <input type="range" id="r-opacity" min="0" max="100" value="55" oninput="setChartOpacity('r',this.value)">
+      <span id="r-opacity-val">55%</span>
+    </div>
+    <div class="hud" style="top:auto;bottom:10px;">
+      <div class="h-cell"><div class="h-lbl">最終マークまで</div><div class="h-val" id="r-dist">—</div></div>
+      <div class="h-cell"><div class="h-lbl">方位</div><div class="h-val" id="r-brng">—</div></div>
+      <div class="h-cell"><div class="h-lbl">GPS精度</div><div class="h-val" id="r-acc">—</div></div>
+    </div>
+  </div>
+
+  <div id="rt-list" class="scroll hidden">
+    <div style="padding:14px;"><table class="mtbl" id="mtbl"><tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr></table></div>
+  </div>
+
+  <div id="rt-share" class="scroll hidden">
+    <p class="sec-title">座標の共有</p>
+    <button class="btn btn-green" onclick="shareToLINE()">LINEで送る</button>
+    <button class="btn btn-ghost" onclick="copyCoords()">テキストをコピー</button>
+    <pre class="share" id="share-text"></pre>
+    <div style="height:24px;"></div>
+  </div>
+</div>
+
+<!-- ============ PRACTICE ============ -->
+<div id="practice" class="screen hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h2>練習モード</h2>
+    <button class="gps-pill" id="p-gps" onclick="toggleGPS()"><span class="dot"></span>GPS</button>
+  </div>
+  <div class="mapwrap">
+    <div id="pmap" class="lmap"></div>
+    <div class="hud">
+      <div class="h-cell"><div class="h-lbl">最終マークまで</div><div class="h-val" id="p-dist">—</div></div>
+      <div class="h-cell"><div class="h-lbl">方位</div><div class="h-val" id="p-brng">—</div></div>
+      <div class="h-cell"><div class="h-lbl">GPS精度</div><div class="h-val" id="p-acc">—</div></div>
+    </div>
+    <div class="chartbar" style="top:84px;">
+      <span>海面図</span>
+      <input type="range" id="p-opacity" min="0" max="100" value="55" oninput="setChartOpacity('p',this.value)">
+      <span id="p-opacity-val">55%</span>
+    </div>
+  </div>
+  <div class="dock">
+    <div class="wind-row">
+      <svg class="wind-dial" id="wind-dial" viewBox="0 0 56 56"><circle cx="28" cy="28" r="26" fill="#F8FAFC" stroke="#D4DEE7" stroke-width="2"/><g id="wind-arrow"><path d="M28 8 L34 26 L28 22 L22 26 Z" fill="#FF6B1A"/></g></svg>
+      <div class="wind-info"><div class="wlbl">風軸（コンパス）</div><div class="wval"><span id="wind-val">0</span><small>°</small></div></div>
+      <div class="wind-steps"><button onclick="windStep(-5)">−</button><button onclick="windStep(5)">+</button></div>
+    </div>
+    <input type="range" class="wind-slider" id="wind-slider" min="0" max="359" value="0" oninput="setWind(+this.value)">
+    <div class="dock-btns">
+      <button class="b-mark" onclick="markHere()">現在地にマーク</button>
+      <button class="b-undo" onclick="undoPMark()">1つ戻す</button>
+      <button class="b-clear" onclick="clearPMarks()">クリア</button>
+    </div>
+  </div>
+</div>
+
+<!-- GPS sheet -->
+<div id="gps-sheet" class="sheet" onclick="closeSheet(event)">
+  <div class="sheet-panel" onclick="event.stopPropagation()">
+    <h3>GPS現在位置</h3>
+    <div class="card">
+      <div class="field"><span class="flbl">北緯</span><span class="bignum" id="gp-lat">—</span></div>
+      <div class="field"><span class="flbl">東経</span><span class="bignum" id="gp-lon">—</span></div>
+      <div class="field"><span class="flbl">精度</span><span class="bignum" id="gp-acc">—</span></div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeSheet(null)">閉じる</button>
   </div>
 </div>
 
@@ -218,30 +325,108 @@ body{font-family:-apple-system,sans-serif;background:#f2f2f7;color:#1c1c1e;}
 const CHART_URL='sagami-chart.pdf';
 const CHART_BOUNDS=[[35+11.5/60,139+27.0/60],[35+22.5/60,139+36.5/60]];
 
-let map=null,watchId=null,currentPos=null;
-let courseMarks=[],mapLayers=[],gpsLayer=null,gpsCircle=null;
-let pdfOverlay=null,chartLoaded=false;
+let mode='home';
+let raceMap=null,pMap=null,watchId=null,currentPos=null;
+let courseMarks=[],rLayers=[],rGps=null,rGpsC=null;
+let pMarks=[],pLayers=[],pGps=null,pGpsC=null,windAxisLayer=null,windDeg=0;
+let chartImg=null; // shared dataURL
+let rChart=null,pChart=null;
 
 const REFOPTS={
   trapezoid:[['M4','本船 (M4)'],['M1','上マーク (M1)'],['M2','リーチング (M2)'],['M3','ゲート (M3)']],
   triangle:[['M3','本船 (M3)'],['M1','上マーク (M1)'],['M2','サイド (M2)']],
-  lr:[['CB','本船 (committee)'],['PIN','ピン'],['TOP','上マーク']],
-  start:[['CB','本船 (committee)'],['PIN','ピン']],
+  lr:[['CB','本船'],['PIN','ピン'],['TOP','上マーク']],
+  start:[['CB','本船'],['PIN','ピン']],
   wlo:[['DN','下マーク'],['UP','上マーク']],
   trio:[['M3','下マーク (M3)'],['M1','上マーク (M1)'],['M2','サイド (M2)']],
   trapo:[['M1','上マーク (M1)'],['M2','リーチング (M2)'],['M3','下ゲート (M3)']]
 };
 
-function curType(){return document.querySelector('input[name="course"]:checked').value;}
-
-function showTab(name,btn){
-  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden'));
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.remove('hidden');
+/* ---------- navigation ---------- */
+function enterMode(m){
+  mode=m;
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('race').classList.toggle('hidden',m!=='race');
+  document.getElementById('practice').classList.toggle('hidden',m!=='practice');
+  if(m==='race'){onCourseChange();}
+  if(m==='practice'){setTimeout(initPMap,60);}
+}
+function goHome(){
+  mode='home';
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('race').classList.add('hidden');
+  document.getElementById('practice').classList.add('hidden');
+}
+function raceTab(name,btn){
+  ['course','map','list','share'].forEach(n=>document.getElementById('rt-'+n).classList.add('hidden'));
+  document.querySelectorAll('#race .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('rt-'+name).classList.remove('hidden');
   if(btn)btn.classList.add('active');
-  if(name==='map')initMap();
+  if(name==='map')setTimeout(initRMap,60);
 }
 
+/* ---------- helpers ---------- */
+const R=6371000,rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI;
+function dest(la,lo,b,d){const br=rad(b),dr=d/R,p=rad(la),q=rad(lo);
+  const p2=Math.asin(Math.sin(p)*Math.cos(dr)+Math.cos(p)*Math.sin(dr)*Math.cos(br));
+  const q2=q+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(p),Math.cos(dr)-Math.sin(p)*Math.sin(p2));
+  return{lat:deg(p2),lon:deg(q2)};}
+function haversine(la1,lo1,la2,lo2){const dL=rad(la2-la1),dO=rad(lo2-lo1);
+  const a=Math.sin(dL/2)**2+Math.cos(rad(la1))*Math.cos(rad(la2))*Math.sin(dO/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function bearing(la1,lo1,la2,lo2){const dO=rad(lo2-lo1);
+  const y=Math.sin(dO)*Math.cos(rad(la2));
+  const x=Math.cos(rad(la1))*Math.sin(rad(la2))-Math.sin(rad(la1))*Math.cos(rad(la2))*Math.cos(dO);
+  return(deg(Math.atan2(y,x))+360)%360;}
+function fmtD(m){return m>=1000?(m/1000).toFixed(2)+'km':Math.round(m)+'m';}
+function dmin(d,m){return parseFloat(d)+parseFloat(m)/60;}
+function val(id){return +document.getElementById(id).value;}
+function fmtLL(v){const D=Math.floor(v);return D+'°'+((v-D)*60).toFixed(4)+"'";}
+
+function step(id,delta,min,max,wrap){
+  let v=val(id)+delta;
+  if(wrap){v=(v+360)%360;}else{v=Math.max(min,Math.min(max,v));}
+  document.getElementById(id).value=Math.round(v*100)/100;recalc();
+}
+
+/* ---------- chart overlay ---------- */
+function ensureChart(cb){
+  if(chartImg){cb();return;}
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument(CHART_URL).promise.then(pdf=>pdf.getPage(1)).then(page=>{
+    const vp=page.getViewport({scale:3});const c=document.createElement('canvas');
+    c.width=vp.width;c.height=vp.height;
+    return page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise.then(()=>c);
+  }).then(c=>{chartImg=c.toDataURL('image/png');cb();}).catch(e=>console.error('chart',e));
+}
+function addChart(which){
+  ensureChart(()=>{
+    if(which==='r'&&raceMap){if(rChart)raceMap.removeLayer(rChart);
+      rChart=L.imageOverlay(chartImg,CHART_BOUNDS,{opacity:val('r-opacity')/100,interactive:false}).addTo(raceMap);}
+    if(which==='p'&&pMap){if(pChart)pMap.removeLayer(pChart);
+      pChart=L.imageOverlay(chartImg,CHART_BOUNDS,{opacity:val('p-opacity')/100,interactive:false}).addTo(pMap);}
+  });
+}
+function setChartOpacity(which,v){
+  document.getElementById(which+'-opacity-val').textContent=v+'%';
+  if(which==='r'&&rChart)rChart.setOpacity(v/100);
+  if(which==='p'&&pChart)pChart.setOpacity(v/100);
+}
+
+/* ---------- marker icon ---------- */
+const SHAPE={
+  up:{c:'#E63946',r:'50%'}, side:{c:'#00B368',r:'50%'}, gate:{c:'#F4A300',r:'4px'},
+  boat:{c:'#0A2540',r:'4px'}, pin:{c:'#FF6B1A',r:'50%'}, fin:{c:'#7B2FF7',r:'4px'},
+  outer:{c:'#E63946',r:'4px'}, down:{c:'#00A3E0',r:'50%'}, p:{c:'#FF6B1A',r:'50%'}
+};
+function icon(kind,txt){
+  const s=SHAPE[kind]||{c:'#0A2540',r:'50%'};
+  return L.divIcon({html:'<div style="background:'+s.c+';color:#fff;width:30px;height:30px;border-radius:'+s.r+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(10,37,64,0.45);">'+txt+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});
+}
+function gpsIcon(){return L.divIcon({html:'<div style="width:16px;height:16px;border-radius:50%;background:#00A3E0;border:3px solid #fff;box-shadow:0 0 0 2px #00A3E0,0 2px 6px rgba(0,0,0,.4);"></div>',iconSize:[16,16],iconAnchor:[8,8],className:''});}
+
+/* ==================== RACE ==================== */
+function curType(){return document.querySelector('input[name="course"]:checked').value;}
 function onCourseChange(){
   const v=curType();
   document.getElementById('sec-trap').classList.toggle('hidden',!(v==='trapezoid'||v==='trapo'));
@@ -249,339 +434,198 @@ function onCourseChange(){
   document.getElementById('sec-lr').classList.toggle('hidden',v!=='lr');
   document.getElementById('sec-start').classList.toggle('hidden',v!=='start');
   document.getElementById('sec-wlo').classList.toggle('hidden',v!=='wlo');
-  // finish rows only for full trapezoid
   document.querySelectorAll('#sec-trap .finrow').forEach(el=>el.classList.toggle('hidden',v!=='trapezoid'));
-  // rebuild reference mark options
-  const sel=document.getElementById('refMark');
-  sel.innerHTML='';
+  const sel=document.getElementById('refMark');sel.innerHTML='';
   REFOPTS[v].forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
-  updateUnitLabels();
-  recalc();
+  updateUnitLabels();recalc();
 }
-
-function unitSelId(){
-  const v=curType();
+function unitSelId(){const v=curType();
   if(v==='trapezoid'||v==='trapo')return 'trap-unit';
   if(v==='triangle'||v==='trio')return 'tri-unit';
-  if(v==='lr')return 'lr-unit';
-  if(v==='wlo')return 'wlo-unit';
-  return null;
-}
-
+  if(v==='lr')return 'lr-unit'; if(v==='wlo')return 'wlo-unit'; return null;}
 function isNM(){const id=unitSelId();return id?document.getElementById(id).value==='nm':false;}
+function updateUnitLabels(){const u=isNM()?'nm':'m';document.querySelectorAll('.udist').forEach(el=>el.textContent=u);}
+function getRef(){return{lat:dmin(val('ref-latd'),document.getElementById('ref-latm').value),lon:dmin(val('ref-lond'),document.getElementById('ref-lonm').value)};}
 
-function updateUnitLabels(){
-  const u=isNM()?'nm':'m';
-  document.querySelectorAll('.udist').forEach(el=>el.textContent=u);
-}
-
-const R=6371000,rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI;
-function dest(la,lo,b,d){
-  const br=rad(b),dr=d/R,p=rad(la),q=rad(lo);
-  const p2=Math.asin(Math.sin(p)*Math.cos(dr)+Math.cos(p)*Math.sin(dr)*Math.cos(br));
-  const q2=q+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(p),Math.cos(dr)-Math.sin(p)*Math.sin(p2));
-  return{lat:deg(p2),lon:deg(q2)};
-}
-function haversine(la1,lo1,la2,lo2){
-  const dL=rad(la2-la1),dO=rad(lo2-lo1);
-  const a=Math.sin(dL/2)**2+Math.cos(rad(la1))*Math.cos(rad(la2))*Math.sin(dO/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-function bearing(la1,lo1,la2,lo2){
-  const dO=rad(lo2-lo1);
-  const y=Math.sin(dO)*Math.cos(rad(la2));
-  const x=Math.cos(rad(la1))*Math.sin(rad(la2))-Math.sin(rad(la1))*Math.cos(rad(la2))*Math.cos(dO);
-  return(deg(Math.atan2(y,x))+360)%360;
-}
-function fmtD(m){return m>=1000?(m/1000).toFixed(2)+'km':Math.round(m)+'m';}
-function dmin(d,m){return parseFloat(d)+parseFloat(m)/60;}
-function getRef(){
-  return{lat:dmin(document.getElementById('ref-latd').value,document.getElementById('ref-latm').value),
-         lon:dmin(document.getElementById('ref-lond').value,document.getElementById('ref-lonm').value)};
-}
-function val(id){return +document.getElementById(id).value;}
+function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,txt};}
 
 function calcMarks(){
-  const type=curType();
-  const ref=getRef();
-  const refMk=document.getElementById('refMark').value;
-  const k=isNM()?1852:1;
+  const type=curType(),ref=getRef(),refMk=document.getElementById('refMark').value,k=isNM()?1852:1;
   let marks=[],basisMap={};
-
   if(type==='trapezoid'||type==='trapo'){
-    const W=val('p-wind');
-    const d14=val('p-d14')*k;
-    const d12=d14*val('p-r12')/100, d23=d14*val('p-r23')/100;
-    const r412=val('p-r412'), r123=val('p-r123');
-    const gw=val('p-gw')*k;
-    const b14=W, b12=(W+180-r412+360)%360, b23=(b12+(180-r123)+360)%360;
+    const W=val('p-wind'),d14=val('p-d14')*k,d12=d14*val('p-r12')/100,d23=d14*val('p-r23')/100;
+    const r412=val('p-r412'),r123=val('p-r123'),gw=val('p-gw')*k;
+    const b14=W,b12=(W+180-r412+360)%360,b23=(b12+(180-r123)+360)%360;
     if(type==='trapezoid'){
-      const M4=ref;
-      const M1=dest(M4.lat,M4.lon,b14,d14);
-      const M2=dest(M1.lat,M1.lon,b12,d12);
-      const M3=dest(M2.lat,M2.lon,b23,d23);
-      const dFin=val('p-fin')*k, r23f=val('p-r23f');
-      const b32=(b23+180)%360, b3f=(b32-(180-r23f)+360)%360;
-      const FIN=dest(M3.lat,M3.lon,b3f,dFin);
-      const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2), GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
-      const OUT=dest(M4.lat,M4.lon,(W+90)%360,gw);
-      basisMap={M4:M4,M1:M1,M2:M2,M3:M3};
-      marks=[mk('M4','本船 (M4)',M4,'#D85A30','BO'),mk('M1','上マーク (M1)',M1,'#185FA5','UP'),
-             mk('M2','リーチング (M2)',M2,'#0F6E56','SD'),mk('GA','ゲートA (M3)',GA,'#5F5E5A','GT'),
-             mk('GB','ゲートB',GB,'#5F5E5A','GT'),mk('FIN','フィニッシュ',FIN,'#BA7517','FN'),
-             mk('OUT','アウター',OUT,'#993C1D','OT')];
+      const M4=ref,M1=dest(M4.lat,M4.lon,b14,d14),M2=dest(M1.lat,M1.lon,b12,d12),M3=dest(M2.lat,M2.lon,b23,d23);
+      const dFin=val('p-fin')*k,r23f=val('p-r23f'),b32=(b23+180)%360,b3f=(b32-(180-r23f)+360)%360;
+      const FIN=dest(M3.lat,M3.lon,b3f,dFin),GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2),OUT=dest(M4.lat,M4.lon,(W+90)%360,gw);
+      basisMap={M4,M1,M2,M3};
+      marks=[mk('M4','本船 (M4)',M4,'boat','本'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','ゲートA (M3)',GA,'gate','G'),mk('GB','ゲートB',GB,'gate','G'),mk('FIN','フィニッシュ',FIN,'fin','F'),mk('OUT','アウター',OUT,'outer','A')];
     }else{
-      const M1=ref;
-      const M2=dest(M1.lat,M1.lon,b12,d12);
-      const M3=dest(M2.lat,M2.lon,b23,d23);
-      const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2), GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
-      basisMap={M1:M1,M2:M2,M3:M3};
-      marks=[mk('M1','上マーク (M1)',M1,'#185FA5','UP'),mk('M2','リーチング (M2)',M2,'#0F6E56','SD'),
-             mk('GA','下ゲートA (M3)',GA,'#5F5E5A','GT'),mk('GB','下ゲートB',GB,'#5F5E5A','GT')];
+      const M1=ref,M2=dest(M1.lat,M1.lon,b12,d12),M3=dest(M2.lat,M2.lon,b23,d23);
+      const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
+      basisMap={M1,M2,M3};
+      marks=[mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲートA (M3)',GA,'gate','G'),mk('GB','下ゲートB',GB,'gate','G')];
     }
-
   }else if(type==='triangle'||type==='trio'){
-    const W=val('t-wind');
-    const d13=val('t-d13')*k;
-    const r312=val('t-r312'), r123=val('t-r123');
-    const gw=val('t-gw')*k;
-    const sinS=Math.sin(rad(180-r312-r123))||0.001;
-    const d12=d13*Math.sin(rad(r123))/sinS;
-    const b31=W, b13=(W+180)%360, b12=(b13-r312+360)%360;
-    const M3=ref;
-    const M1=dest(M3.lat,M3.lon,b31,d13);
-    const M2=dest(M1.lat,M1.lon,b12,d12);
-    const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2), GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
-    basisMap={M3:M3,M1:M1,M2:M2};
-    const boatLabel=type==='triangle'?'本船 (M3)':'下マーク (M3)';
-    const boatColor=type==='triangle'?'#D85A30':'#185FA5';
-    marks=[mk('M3',boatLabel,M3,boatColor,type==='triangle'?'BO':'DN'),
-           mk('M1','上マーク (M1)',M1,'#185FA5','UP'),mk('M2','サイド (M2)',M2,'#0F6E56','SD'),
-           mk('GA','ゲートA',GA,'#5F5E5A','GT'),mk('GB','ゲートB',GB,'#5F5E5A','GT')];
-
+    const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),gw=val('t-gw')*k;
+    const sinS=Math.sin(rad(180-r312-r123))||0.001,d12=d13*Math.sin(rad(r123))/sinS;
+    const b31=W,b13=(W+180)%360,b12=(b13-r312+360)%360;
+    const M3=ref,M1=dest(M3.lat,M3.lon,b31,d13),M2=dest(M1.lat,M1.lon,b12,d12);
+    const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
+    basisMap={M3,M1,M2};
+    const isR=type==='triangle';
+    marks=[mk('M3',isR?'本船 (M3)':'下マーク (M3)',M3,isR?'boat':'down',isR?'本':'下'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','サイド (M2)',M2,'side','横'),mk('GA','ゲートA',GA,'gate','G'),mk('GB','ゲートB',GB,'gate','G')];
   }else if(type==='lr'){
-    const W=val('lr-wind');
-    const d=val('lr-d')*k, sw=val('lr-sw')*k, gw=val('lr-gw')*k;
-    const CB=ref;
-    const TOP=dest(CB.lat,CB.lon,W,d);
-    const PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
-    const GA=dest(TOP.lat,TOP.lon,(W+90)%360,gw/2), GB=dest(TOP.lat,TOP.lon,(W-90+360)%360,gw/2);
-    basisMap={CB:CB,PIN:PIN,TOP:TOP};
-    marks=[mk('CB','本船 (スタート)',CB,'#D85A30','BO'),mk('PIN','ピン',PIN,'#993C1D','PN'),
-           mk('TOP','上マーク',TOP,'#185FA5','UP'),mk('GA','下ゲートA',GA,'#5F5E5A','GT'),
-           mk('GB','下ゲートB',GB,'#5F5E5A','GT')];
-
+    const W=val('lr-wind'),d=val('lr-d')*k,sw=val('lr-sw')*k,gw=val('lr-gw')*k;
+    const CB=ref,TOP=dest(CB.lat,CB.lon,W,d),PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
+    const GA=dest(TOP.lat,TOP.lon,(W+90)%360,gw/2),GB=dest(TOP.lat,TOP.lon,(W-90+360)%360,gw/2);
+    basisMap={CB,PIN,TOP};
+    marks=[mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'),mk('TOP','上マーク',TOP,'up','上'),mk('GA','下ゲートA',GA,'gate','G'),mk('GB','下ゲートB',GB,'gate','G')];
   }else if(type==='wlo'){
-    const W=val('w-wind');
-    const d=val('w-d')*k, gw=val('w-gw')*k;
-    const DN=ref;
-    const UP=dest(DN.lat,DN.lon,W,d);
-    const GA=dest(DN.lat,DN.lon,(W+90)%360,gw/2), GB=dest(DN.lat,DN.lon,(W-90+360)%360,gw/2);
-    basisMap={DN:DN,UP:UP};
-    marks=[mk('UP','上マーク',UP,'#185FA5','UP'),mk('GA','下ゲートA',GA,'#5F5E5A','GT'),
-           mk('GB','下ゲートB',GB,'#5F5E5A','GT')];
-
-  }else{ // start
-    const W=val('s-wind'), sw=val('s-sw');
-    const CB=ref;
-    const PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
-    basisMap={CB:CB,PIN:PIN};
-    marks=[mk('CB','本船',CB,'#D85A30','BO'),mk('PIN','ピン',PIN,'#993C1D','PN')];
+    const W=val('w-wind'),d=val('w-d')*k,gw=val('w-gw')*k;
+    const DN=ref,UP=dest(DN.lat,DN.lon,W,d),GA=dest(DN.lat,DN.lon,(W+90)%360,gw/2),GB=dest(DN.lat,DN.lon,(W-90+360)%360,gw/2);
+    basisMap={DN,UP};
+    marks=[mk('UP','上マーク',UP,'up','上'),mk('GA','下ゲートA',GA,'gate','G'),mk('GB','下ゲートB',GB,'gate','G')];
+  }else{
+    const W=val('s-wind'),sw=val('s-sw'),CB=ref,PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
+    basisMap={CB,PIN};
+    marks=[mk('CB','本船',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P')];
   }
-
-  // shift so that chosen reference mark sits exactly on the entered coordinate
   const basis=basisMap[refMk];
-  if(basis){
-    const dLat=ref.lat-basis.lat, dLon=ref.lon-basis.lon;
-    marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});
-  }
-  // put the reference mark first so distance/bearing readouts use it
+  if(basis){const dLat=ref.lat-basis.lat,dLon=ref.lon-basis.lon;marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});}
   marks.sort((a,b)=>(a.id===refMk?-1:b.id===refMk?1:0));
   return marks;
 }
+function recalc(){try{updateUnitLabels();courseMarks=calcMarks();renderTable();renderShare();if(raceMap)renderRMarks();}catch(e){console.error(e);}}
+function calcAndMap(){recalc();raceTab('map',document.querySelectorAll('#race .tab')[1]);}
 
-function mk(id,label,pos,color,kind){return{id,label,lat:pos.lat,lon:pos.lon,color,kind};}
-
-const KIND_TXT={BO:'本',UP:'上',SD:'横',GT:'G',FN:'F',OT:'A',PN:'P',DN:'下'};
-
-function recalc(){
-  try{
-    updateUnitLabels();
-    courseMarks=calcMarks();
-    renderTable();renderShare();
-    if(map)renderMapMarks();
-  }catch(e){console.error(e);}
-}
-
-function calcAndMap(){
-  recalc();
-  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden'));
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-  document.getElementById('tab-map').classList.remove('hidden');
-  document.querySelectorAll('.tab')[1].classList.add('active');
-  initMap();
-}
-
-function initMap(){
-  if(map){map.invalidateSize();return;}
+function initRMap(){
+  if(raceMap){raceMap.invalidateSize();return;}
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
-  map=L.map('map').setView(c,13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
-  map.on('mousemove',function(e){
-    if(!courseMarks.length)return;
-    const last=courseMarks[courseMarks.length-1];
-    const d=haversine(last.lat,last.lon,e.latlng.lat,e.latlng.lng);
-    const b=bearing(last.lat,last.lon,e.latlng.lat,e.latlng.lng);
-    document.getElementById('lv-cursor').textContent='カーソル: '+last.label+'から '+fmtD(d)+' / '+Math.round(b)+'°';
-  });
-  loadChart();
-  if(courseMarks.length)renderMapMarks();
+  raceMap=L.map('rmap',{zoomControl:true}).setView(c,13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(raceMap);
+  addChart('r');
+  if(courseMarks.length)renderRMarks();
 }
-
-function loadChart(){
-  if(chartLoaded)return;
-  const status=document.getElementById('pdf-status');
-  status.textContent='海面図 読込中…';
-  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  pdfjsLib.getDocument(CHART_URL).promise.then(pdf=>pdf.getPage(1)).then(page=>{
-    const vp=page.getViewport({scale:3});
-    const canvas=document.createElement('canvas');
-    canvas.width=vp.width;canvas.height=vp.height;
-    return page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise.then(()=>canvas);
-  }).then(canvas=>{
-    pdfOverlay=L.imageOverlay(canvas.toDataURL('image/png'),CHART_BOUNDS,{
-      opacity:val('pdf-opacity')/100,interactive:false,zIndex:10
-    }).addTo(map);
-    chartLoaded=true;
-    status.textContent='';
-  }).catch(err=>{status.textContent='海面図エラー';console.error(err);});
-}
-
-function updatePDFOpacity(v){
-  document.getElementById('pdf-opacity-val').textContent=v+'%';
-  if(pdfOverlay)pdfOverlay.setOpacity(v/100);
-}
-
-function mkIcon(m){
-  return L.divIcon({
-    html:'<div style="background:'+m.color+';color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.4);">'+(KIND_TXT[m.kind]||'')+'</div>',
-    iconSize:[32,32],iconAnchor:[16,16],className:''
-  });
-}
-
-function renderMapMarks(){
-  mapLayers.forEach(l=>{if(map.hasLayer(l))map.removeLayer(l);});
-  mapLayers=[];
+function renderRMarks(){
+  rLayers.forEach(l=>raceMap.removeLayer(l));rLayers=[];
   if(!courseMarks.length)return;
   const lls=courseMarks.map(m=>[m.lat,m.lon]);
-  const line=L.polyline(lls,{color:'#378ADD',weight:2,dashArray:'6,4',opacity:0.8}).addTo(map);
-  mapLayers.push(line);
-  courseMarks.forEach(m=>{
-    const mark=L.marker([m.lat,m.lon],{icon:mkIcon(m)}).addTo(map);
-    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
-    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
-    mark.bindPopup('<b>'+m.label+'</b><br>北緯'+latD+'度'+latM+'分<br>東経'+lonD+'度'+lonM+'分');
-    mapLayers.push(mark);
-  });
-  map.fitBounds(lls,{padding:[50,50],maxZoom:16});
+  rLayers.push(L.polyline(lls,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:0.85}).addTo(raceMap));
+  courseMarks.forEach(m=>{const mk2=L.marker([m.lat,m.lon],{icon:icon(m.kind,m.txt)}).addTo(raceMap);
+    mk2.bindPopup('<b>'+m.label+'</b><br>'+fmtLL(m.lat)+' / '+fmtLL(m.lon));rLayers.push(mk2);});
+  raceMap.fitBounds(lls,{padding:[60,60],maxZoom:16});
 }
-
-function showGPSPanel(){document.getElementById('gps-overlay').classList.add('show');}
-function hideGPSPanel(e){if(!e||e.target===document.getElementById('gps-overlay'))document.getElementById('gps-overlay').classList.remove('show');}
-
-function toggleGPS(){
-  const btn=document.getElementById('gps-toggle');
-  if(watchId!==null){
-    navigator.geolocation.clearWatch(watchId);watchId=null;
-    if(gpsLayer&&map){map.removeLayer(gpsLayer);gpsLayer=null;}
-    if(gpsCircle&&map){map.removeLayer(gpsCircle);gpsCircle=null;}
-    currentPos=null;btn.textContent='GPS追跡 開始';
-    ['lv-ref','lv-acc','lv-dist','lv-brng'].forEach(id=>document.getElementById(id).textContent='—');
-  }else{
-    if(!navigator.geolocation){alert('GPSが利用できません');return;}
-    btn.textContent='GPS追跡 停止';
-    watchId=navigator.geolocation.watchPosition(onGPS,()=>{document.getElementById('lv-acc').textContent='エラー';},
-      {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
-  }
-}
-
-function onGPS(pos){
-  currentPos={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
-  const lat=currentPos.lat,lon=currentPos.lon,acc=currentPos.acc;
-  const latD=Math.floor(lat),latM=((lat-latD)*60).toFixed(4);
-  const lonD=Math.floor(lon),lonM=((lon-lonD)*60).toFixed(4);
-  document.getElementById('gp-lat').textContent=latD+'度 '+latM+'分';
-  document.getElementById('gp-lon').textContent=lonD+'度 '+lonM+'分';
-  document.getElementById('gp-acc').textContent='±'+Math.round(acc)+'m';
-  document.getElementById('lv-acc').textContent='±'+Math.round(acc)+'m';
-  if(courseMarks.length){
-    const ref=courseMarks[0];
-    document.getElementById('lv-ref').textContent=fmtD(haversine(lat,lon,ref.lat,ref.lon));
-    const last=courseMarks[courseMarks.length-1];
-    document.getElementById('lv-dist').textContent=fmtD(haversine(lat,lon,last.lat,last.lon));
-    document.getElementById('lv-brng').textContent=Math.round(bearing(lat,lon,last.lat,last.lon))+'°';
-  }
-  if(map){
-    const icon=L.divIcon({html:'<div style="background:#007AFF;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>',iconSize:[14,14],iconAnchor:[7,7],className:''});
-    if(!gpsLayer){
-      gpsLayer=L.marker([lat,lon],{icon,zIndexOffset:1000}).addTo(map);
-      gpsCircle=L.circle([lat,lon],{radius:acc,color:'#007AFF',fillColor:'#007AFF',fillOpacity:0.08,weight:1}).addTo(map);
-    }else{gpsLayer.setLatLng([lat,lon]);gpsLayer.setIcon(icon);gpsCircle.setLatLng([lat,lon]);gpsCircle.setRadius(acc);}
-  }
-}
-
-function useGPSAsRef(){
-  if(currentPos){setRef(currentPos);return;}
-  if(!navigator.geolocation){alert('GPSが利用できません');return;}
-  navigator.geolocation.getCurrentPosition(p=>{currentPos={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};setRef(currentPos);},
-    ()=>alert('位置情報の取得に失敗しました'),{enableHighAccuracy:true,timeout:10000});
-}
-
-function setRef(pos){
-  const latD=Math.floor(pos.lat),latM=((pos.lat-latD)*60).toFixed(4);
-  const lonD=Math.floor(pos.lon),lonM=((pos.lon-lonD)*60).toFixed(4);
-  document.getElementById('ref-latd').value=latD;
-  document.getElementById('ref-latm').value=latM;
-  document.getElementById('ref-lond').value=lonD;
-  document.getElementById('ref-lonm').value=lonM;
-  hideGPSPanel(null);recalc();
-}
-
 function renderTable(){
   const ref=courseMarks[0];if(!ref)return;
   let h='<tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr>';
-  courseMarks.forEach(m=>{
-    const d=haversine(ref.lat,ref.lon,m.lat,m.lon);
-    const b=bearing(ref.lat,ref.lon,m.lat,m.lon);
-    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
-    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
-    h+='<tr><td><span style="background:'+m.color+';border-radius:50%;padding:1px 6px;color:white;font-size:10px;font-weight:700;">'+(KIND_TXT[m.kind]||'')+'</span> '+m.label+'</td>'+
-       '<td style="font-size:11px;color:#555;">'+latD+'°'+latM+"'</td>"+
-       '<td style="font-size:11px;color:#555;">'+lonD+'°'+lonM+"'</td>"+
-       '<td style="font-weight:600;">'+(m.id===ref.id?'基準':fmtD(d))+'</td>'+
-       '<td>'+(m.id===ref.id?'—':Math.round(b)+'°')+'</td></tr>';
-  });
-  document.getElementById('mark-table').innerHTML=h;
+  courseMarks.forEach(m=>{const d=haversine(ref.lat,ref.lon,m.lat,m.lon),b=bearing(ref.lat,ref.lon,m.lat,m.lon);
+    const s=SHAPE[m.kind]||{c:'#0A2540'};
+    h+='<tr><td><span class="chip" style="background:'+s.c+'">'+m.txt+'</span>'+m.label+'</td><td>'+fmtLL(m.lat)+'</td><td>'+fmtLL(m.lon)+'</td><td><b>'+(m.id===ref.id?'基準':fmtD(d))+'</b></td><td>'+(m.id===ref.id?'—':Math.round(b)+'°')+'</td></tr>';});
+  document.getElementById('mtbl').innerHTML=h;
 }
-
-function renderShare(){
-  let t='【マークレイヤー座標】\n';
-  courseMarks.forEach(m=>{
-    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
-    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
-    t+=m.label+': 北緯'+latD+'度'+latM+'分 東経'+lonD+'度'+lonM+'分\n';
-  });
-  document.getElementById('share-text').textContent=t;
-}
-
+function renderShare(){let t='【マークレイヤー座標】\n';courseMarks.forEach(m=>{t+=m.label+': 北緯'+fmtLL(m.lat)+' 東経'+fmtLL(m.lon)+'\n';});document.getElementById('share-text').textContent=t;}
 function shareToLINE(){window.open('https://line.me/R/msg/text/?'+encodeURIComponent(document.getElementById('share-text').textContent));}
-function copyCoords(){
-  const t=document.getElementById('share-text').textContent;
+function copyCoords(){const t=document.getElementById('share-text').textContent;
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('コピーしました'));
-  else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('コピーしました');}
+  else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('コピーしました');}}
+function useGPSAsRef(){
+  if(currentPos){applyRef(currentPos);return;}
+  if(!navigator.geolocation){alert('GPSが利用できません');return;}
+  navigator.geolocation.getCurrentPosition(p=>{currentPos={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};applyRef(currentPos);},()=>alert('取得失敗'),{enableHighAccuracy:true,timeout:10000});
+}
+function applyRef(pos){
+  document.getElementById('ref-latd').value=Math.floor(pos.lat);
+  document.getElementById('ref-latm').value=((pos.lat-Math.floor(pos.lat))*60).toFixed(4);
+  document.getElementById('ref-lond').value=Math.floor(pos.lon);
+  document.getElementById('ref-lonm').value=((pos.lon-Math.floor(pos.lon))*60).toFixed(4);
+  recalc();
 }
 
-onCourseChange();
+/* ==================== PRACTICE ==================== */
+function initPMap(){
+  if(pMap){pMap.invalidateSize();return;}
+  const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
+  pMap=L.map('pmap',{zoomControl:false}).setView(c,14);
+  L.control.zoom({position:'topright'}).addTo(pMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(pMap);
+  addChart('p');
+  pMap.on('click',e=>addPMark(e.latlng.lat,e.latlng.lng));
+}
+function setWind(v){windDeg=(v+360)%360;document.getElementById('wind-val').textContent=Math.round(windDeg);
+  document.getElementById('wind-slider').value=windDeg;
+  document.getElementById('wind-arrow').setAttribute('transform','rotate('+windDeg+' 28 28)');
+  drawWindAxis();}
+function windStep(d){setWind(windDeg+d);}
+function addPMark(lat,lon){
+  const n=pMarks.length+1;
+  const m={lat,lon,n};
+  const isBase=pMarks.length===0;
+  m.marker=L.marker([lat,lon],{icon:icon(isBase?'pin':'up',isBase?'基':String(n)),draggable:true}).addTo(pMap);
+  m.marker.on('dragend',ev=>{const ll=ev.target.getLatLng();m.lat=ll.lat;m.lon=ll.lng;drawWindAxis();updatePHUD();});
+  pMarks.push(m);
+  drawWindAxis();updatePHUD();
+}
+function markHere(){
+  if(currentPos){addPMark(currentPos.lat,currentPos.lon);pMap.panTo([currentPos.lat,currentPos.lon]);}
+  else if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{currentPos={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};addPMark(currentPos.lat,currentPos.lon);pMap.panTo([currentPos.lat,currentPos.lon]);},()=>alert('GPS取得失敗。地図をタップしてマークできます'),{enableHighAccuracy:true,timeout:10000});}
+  else alert('GPS不可。地図タップでマークできます');
+}
+function undoPMark(){const m=pMarks.pop();if(m)pMap.removeLayer(m.marker);
+  pMarks.forEach((mm,i)=>{const isBase=i===0;mm.marker.setIcon(icon(isBase?'pin':'up',isBase?'基':String(i+1)));});
+  drawWindAxis();updatePHUD();}
+function clearPMarks(){pMarks.forEach(m=>pMap.removeLayer(m.marker));pMarks=[];
+  if(windAxisLayer){pMap.removeLayer(windAxisLayer);windAxisLayer=null;}updatePHUD();}
+function drawWindAxis(){
+  if(windAxisLayer){pMap.removeLayer(windAxisLayer);windAxisLayer=null;}
+  if(!pMarks.length)return;
+  const base=pMarks[0];
+  const up=dest(base.lat,base.lon,windDeg,4000);
+  const dn=dest(base.lat,base.lon,(windDeg+180)%360,4000);
+  windAxisLayer=L.layerGroup().addTo(pMap);
+  L.polyline([[dn.lat,dn.lon],[up.lat,up.lon]],{color:'#FF6B1A',weight:3,opacity:0.45,dashArray:'2,8'}).addTo(windAxisLayer);
+  L.marker([up.lat,up.lon],{icon:L.divIcon({html:'<div style="color:#FF6B1A;font-size:22px;font-weight:800;transform:rotate('+windDeg+'deg);">↑</div>',iconSize:[24,24],iconAnchor:[12,12],className:''})}).addTo(windAxisLayer);
+}
+function updatePHUD(){
+  if(!currentPos||!pMarks.length){document.getElementById('p-dist').textContent='—';document.getElementById('p-brng').textContent='—';return;}
+  const last=pMarks[pMarks.length-1];
+  document.getElementById('p-dist').textContent=fmtD(haversine(currentPos.lat,currentPos.lon,last.lat,last.lon));
+  document.getElementById('p-brng').innerHTML=Math.round(bearing(currentPos.lat,currentPos.lon,last.lat,last.lon))+'<small>°</small>';
+}
+
+/* ==================== GPS shared ==================== */
+function toggleGPS(){
+  const pills=[document.getElementById('r-gps'),document.getElementById('p-gps')];
+  if(watchId!==null){
+    navigator.geolocation.clearWatch(watchId);watchId=null;currentPos=null;
+    pills.forEach(p=>p&&p.classList.remove('on'));
+    [rGps,rGpsC].forEach(l=>{if(l&&raceMap)raceMap.removeLayer(l);});rGps=rGpsC=null;
+    [pGps,pGpsC].forEach(l=>{if(l&&pMap)pMap.removeLayer(l);});pGps=pGpsC=null;
+    ['r-dist','r-brng','r-acc','p-dist','p-brng','p-acc'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+  }else{
+    if(!navigator.geolocation){alert('GPSが利用できません');return;}
+    pills.forEach(p=>p&&p.classList.add('on'));
+    watchId=navigator.geolocation.watchPosition(onGPS,()=>{},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+  }
+}
+function onGPS(pos){
+  currentPos={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+  const lat=currentPos.lat,lon=currentPos.lon,acc=currentPos.acc;
+  document.getElementById('gp-lat').textContent=fmtLL(lat);
+  document.getElementById('gp-lon').textContent=fmtLL(lon);
+  document.getElementById('gp-acc').textContent='±'+Math.round(acc)+'m';
+  document.getElementById('r-acc').innerHTML='±'+Math.round(acc)+'<small>m</small>';
+  document.getElementById('p-acc').innerHTML='±'+Math.round(acc)+'<small>m</small>';
+  if(courseMarks.length){const last=courseMarks[courseMarks.length-1];
+    document.getElementById('r-dist').textContent=fmtD(haversine(lat,lon,last.lat,last.lon));
+    document.getElementById('r-brng').innerHTML=Math.round(bearing(lat,lon,last.lat,last.lon))+'<small>°</small>';}
+  if(raceMap){if(!rGps){rGps=L.marker([lat,lon],{icon:gpsIcon(),zIndexOffset:1000}).addTo(raceMap);rGpsC=L.circle([lat,lon],{radius:acc,color:'#00A3E0',fillColor:'#00A3E0',fillOpacity:0.08,weight:1}).addTo(raceMap);}else{rGps.setLatLng([lat,lon]);rGpsC.setLatLng([lat,lon]);rGpsC.setRadius(acc);}}
+  if(pMap){if(!pGps){pGps=L.marker([lat,lon],{icon:gpsIcon(),zIndexOffset:1000}).addTo(pMap);pGpsC=L.circle([lat,lon],{radius:acc,color:'#00A3E0',fillColor:'#00A3E0',fillOpacity:0.08,weight:1}).addTo(pMap);}else{pGps.setLatLng([lat,lon]);pGpsC.setLatLng([lat,lon]);pGpsC.setRadius(acc);}}
+  updatePHUD();
+}
+function closeSheet(e){if(!e||e.target===document.getElementById('gps-sheet'))document.getElementById('gps-sheet').classList.remove('show');}
 </script>
 </body>
 </html>
