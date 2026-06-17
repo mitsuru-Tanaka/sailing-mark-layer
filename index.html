@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>マークレイヤー</title>
+<link rel="manifest" id="manifest-placeholder">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="マークレイヤー">
+<meta name="theme-color" content="#007AFF">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,sans-serif;background:#f2f2f7;color:#1c1c1e;}
+.header{background:white;border-bottom:1px solid #e5e5ea;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header h1{font-size:17px;font-weight:700;}
+.tabs{display:flex;background:white;border-bottom:1px solid #e5e5ea;}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;color:#8e8e93;border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;}
+.tab.active{color:#007AFF;border-bottom-color:#007AFF;font-weight:600;}
+.section{background:white;margin:10px 12px;border-radius:12px;overflow:hidden;}
+.sec-title{padding:10px 16px 4px;font-size:12px;color:#8e8e93;font-weight:600;letter-spacing:0.5px;}
+.row{padding:12px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;justify-content:space-between;}
+.row:last-child{border-bottom:none;}
+.row-val{font-size:15px;color:#007AFF;font-weight:500;}
+.radio-item{padding:13px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.radio-item:last-child{border-bottom:none;}
+.radio-item input[type=radio]{width:22px;height:22px;accent-color:#007AFF;}
+.radio-item label{font-size:15px;cursor:pointer;}
+.inp-row{padding:9px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:8px;}
+.inp-row:last-child{border-bottom:none;}
+.lbl{font-size:14px;color:#555;min-width:128px;flex-shrink:0;}
+.inp-row input,.inp-row select{border:1px solid #d1d1d6;border-radius:8px;padding:6px 10px;font-size:14px;flex:1;min-width:0;background:white;}
+.unit{font-size:13px;color:#8e8e93;min-width:22px;}
+.btn{display:block;width:calc(100% - 24px);margin:8px 12px;padding:14px;border-radius:12px;border:none;font-size:16px;font-weight:600;cursor:pointer;text-align:center;}
+.btn-blue{background:#007AFF;color:white;}
+.btn-gray{background:#f2f2f7;color:#1c1c1e;}
+.btn-green{background:#34C759;color:white;}
+#map{width:100%;height:calc(100vh - 270px);}
+.live{background:white;border-top:1px solid #e5e5ea;padding:8px 12px;}
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.lv-cell{background:#f0f6ff;border-radius:10px;padding:7px 10px;}
+.lv-lbl{font-size:10px;color:#555;margin-bottom:2px;}
+.lv-val{font-size:17px;font-weight:700;color:#007AFF;}
+.mark-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mark-table th{background:#f5f5f5;padding:8px 6px;text-align:left;font-weight:600;font-size:11px;color:#555;border-bottom:1px solid #e5e5ea;}
+.mark-table td{padding:9px 6px;border-bottom:1px solid #f2f2f7;vertical-align:middle;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-end;}
+.overlay.show{display:flex;}
+.ov-panel{background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
+.ov-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <span style="font-size:22px;">⛵</span>
+  <h1>マークレイヤー</h1>
+  <button onclick="showGPSPanel()" style="border:none;background:none;font-size:22px;cursor:pointer;">📍</button>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('course',this)">コース設定</button>
+  <button class="tab" onclick="showTab('map',this)">マップ</button>
+  <button class="tab" onclick="showTab('marks',this)">マーク一覧</button>
+  <button class="tab" onclick="showTab('share',this)">共有</button>
+</div>
+
+<!-- COURSE SETUP -->
+<div id="tab-course">
+  <p class="sec-title">コースタイプ</p>
+  <div class="section">
+    <div class="radio-item"><input type="radio" name="course" id="c1" value="trapezoid-m" checked onchange="onCourseChange()"><label for="c1">トラペゾイド (m)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c2" value="trapezoid-nm" onchange="onCourseChange()"><label for="c2">トラペゾイド (nm)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c3" value="triangle-m" onchange="onCourseChange()"><label for="c3">トライアングル (m)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c4" value="triangle-nm" onchange="onCourseChange()"><label for="c4">トライアングル (nm)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c5" value="lr-m" onchange="onCourseChange()"><label for="c5">L R (m)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c6" value="lr-nm" onchange="onCourseChange()"><label for="c6">L R (nm)</label></div>
+    <div class="radio-item"><input type="radio" name="course" id="c7" value="start-m" onchange="onCourseChange()"><label for="c7">スタート (m)</label></div>
+  </div>
+
+  <div id="sec-trap">
+    <p class="sec-title" id="trap-title">トラペゾイド パラメーター</p>
+    <div class="section">
+      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="p-wind" value="0" min="0" max="359"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">1-4距離</span><input type="number" id="p-d14" value="700"><span class="unit" id="u-d14">m</span></div>
+      <div class="inp-row"><span class="lbl">1-2距離比</span><input type="number" id="p-r12" value="66.7" step="0.1"><span class="unit">%</span></div>
+      <div class="inp-row"><span class="lbl">2-3距離比</span><input type="number" id="p-r23" value="100" step="0.1"><span class="unit">%</span></div>
+      <div class="inp-row"><span class="lbl">4-1-2内角</span><input type="number" id="p-r412" value="60"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">1-2-3内角</span><input type="number" id="p-r123" value="120"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">3-フィニッシュ距離</span><input type="number" id="p-fin" value="200"><span class="unit" id="u-fin">m</span></div>
+      <div class="inp-row"><span class="lbl">2-3-フィニッシュ内角</span><input type="number" id="p-r23f" value="120"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">ゲートマーク間隔</span><input type="number" id="p-gw" value="50"><span class="unit" id="u-gw">m</span></div>
+    </div>
+  </div>
+
+  <div id="sec-tri" class="hidden">
+    <p class="sec-title">トライアングル パラメーター</p>
+    <div class="section">
+      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="t-wind" value="0"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">1-3距離</span><input type="number" id="t-d13" value="700"><span class="unit" id="u-t13">m</span></div>
+      <div class="inp-row"><span class="lbl">3-1-2内角</span><input type="number" id="t-r312" value="60"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">1-2-3内角</span><input type="number" id="t-r123" value="60"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">ゲート幅</span><input type="number" id="t-gw" value="50"><span class="unit" id="u-tgw">m</span></div>
+    </div>
+  </div>
+
+  <div id="sec-lr" class="hidden">
+    <p class="sec-title">L R パラメーター</p>
+    <div class="section">
+      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="lr-wind" value="0"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">上-下距離</span><input type="number" id="lr-d" value="1500"><span class="unit" id="u-lr">m</span></div>
+      <div class="inp-row"><span class="lbl">スタートライン幅</span><input type="number" id="lr-sw" value="150"><span class="unit" id="u-lrsw">m</span></div>
+      <div class="inp-row"><span class="lbl">ゲート幅</span><input type="number" id="lr-gw" value="50"><span class="unit" id="u-lrgw">m</span></div>
+    </div>
+  </div>
+
+  <div id="sec-start" class="hidden">
+    <p class="sec-title">スタート パラメーター</p>
+    <div class="section">
+      <div class="inp-row"><span class="lbl">風軸 (コンパス°)</span><input type="number" id="s-wind" value="0"><span class="unit">°</span></div>
+      <div class="inp-row"><span class="lbl">スタートライン幅</span><input type="number" id="s-sw" value="300"><span class="unit" id="u-ssw">m</span></div>
+    </div>
+  </div>
+
+  <p class="sec-title">基準点 — 今いるマーク</p>
+  <div class="section">
+    <div class="inp-row"><span class="lbl">基準マーク</span>
+      <select id="refMark" style="flex:1;">
+        <option value="m4">🚢 本船 (マーク4)</option>
+        <option value="m1">⬆ 上マーク (マーク1)</option>
+        <option value="m2">↗ リーチングマーク (M2)</option>
+        <option value="m3">⬇ 下マーク/ゲート (M3)</option>
+      </select>
+    </div>
+    <div class="inp-row"><span class="lbl">北緯 (度)</span><input type="number" id="ref-latd" value="35" min="0" max="90"><span class="unit">度</span></div>
+    <div class="inp-row"><span class="lbl">北緯 (分)</span><input type="number" id="ref-latm" value="17.38" step="0.0001"><span class="unit">分</span></div>
+    <div class="inp-row"><span class="lbl">東経 (度)</span><input type="number" id="ref-lond" value="139" min="100" max="180"><span class="unit">度</span></div>
+    <div class="inp-row"><span class="lbl">東経 (分)</span><input type="number" id="ref-lonm" value="30.60" step="0.0001"><span class="unit">分</span></div>
+  </div>
+  <button class="btn btn-gray" onclick="useGPSAsRef()">📍 現在位置 → 基準点に設定</button>
+  <button class="btn btn-blue" onclick="calcAndMap()">マーク位置を計算してマップ表示 →</button>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- MAP -->
+<div id="tab-map" class="hidden">
+  <div style="background:white;border-bottom:1px solid #e5e5ea;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span style="font-size:11px;color:#555;flex-shrink:0;">海面図:</span>
+    <button onclick="loadPDFOverlay()" style="border:1px solid #007AFF;border-radius:8px;padding:4px 10px;font-size:12px;color:#007AFF;background:none;cursor:pointer;">&#128196; PDFを選択</button>
+    <input type="file" id="pdf-input" accept=".pdf" style="display:none;" onchange="onPDFSelected(event)">
+    <span style="font-size:11px;color:#555;flex-shrink:0;">透過:</span>
+    <input type="range" id="pdf-opacity" min="0" max="100" value="70" style="width:70px;" oninput="updatePDFOpacity(this.value)">
+    <span id="pdf-opacity-val" style="font-size:11px;color:#555;min-width:26px;">70%</span>
+    <button onclick="removePDFOverlay()" id="pdf-remove-btn" style="border:1px solid #ff3b30;border-radius:8px;padding:4px 8px;font-size:12px;color:#ff3b30;background:none;cursor:pointer;display:none;">&#x2715;</button>
+    <span id="pdf-status" style="font-size:11px;color:#8e8e93;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;"></span>
+  </div>
+  <div id="map"></div>
+  <div class="live">
+    <div class="live-grid">
+      <div class="lv-cell"><div class="lv-lbl">基準点からの距離</div><div class="lv-val" id="lv-ref">—</div></div>
+      <div class="lv-cell"><div class="lv-lbl">GPS精度</div><div class="lv-val" id="lv-acc">—</div></div>
+      <div class="lv-cell"><div class="lv-lbl">最終マークまで距離</div><div class="lv-val" id="lv-dist">—</div></div>
+      <div class="lv-cell"><div class="lv-lbl">最終マークへ方位</div><div class="lv-val" id="lv-brng">—</div></div>
+    </div>
+    <div id="lv-cursor" style="margin-top:6px;font-size:11px;color:#555;text-align:center;min-height:16px;"></div>
+  </div>
+</div>
+
+<!-- MARKS -->
+<div id="tab-marks" class="hidden">
+  <div style="overflow-x:auto;margin:10px 12px;">
+    <table class="mark-table" id="mark-table">
+      <tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr>
+    </table>
+  </div>
+</div>
+
+<!-- SHARE -->
+<div id="tab-share" class="hidden">
+  <p class="sec-title">共有</p>
+  <button class="btn btn-green" onclick="shareToLINE()">🟢 LINEで送る</button>
+  <button class="btn btn-gray" onclick="copyCoords()">📋 座標テキストをコピー</button>
+  <div class="section" style="margin-top:10px;">
+    <pre id="share-text" style="font-size:11px;color:#333;padding:12px;overflow-x:auto;line-height:1.6;white-space:pre-wrap;"></pre>
+  </div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- PDF Bounds Dialog -->
+<div id="pdf-bounds-dlg" class="overlay" onclick="closePDFBounds(event)">
+  <div class="ov-panel" onclick="event.stopPropagation()">
+    <div class="ov-title">&#128506; 海面図の地理的範囲</div>
+    <p style="font-size:13px;color:#555;margin-bottom:12px;">PDFの四隅の座標を設定してください。<br>相模湾レース海面図2024のデフォルト値を設定済みです。</p>
+    <div class="section" style="margin:0 0 12px;">
+      <div class="inp-row"><span class="lbl">北端 北緯</span><input type="number" id="pn-d" value="35"><span class="unit">度</span><input type="number" id="pn-m" value="22.5" step="0.1"><span class="unit">分</span></div>
+      <div class="inp-row"><span class="lbl">南端 北緯</span><input type="number" id="ps-d" value="35"><span class="unit">度</span><input type="number" id="ps-m" value="11.5" step="0.1"><span class="unit">分</span></div>
+      <div class="inp-row"><span class="lbl">西端 東経</span><input type="number" id="pw-d" value="139"><span class="unit">度</span><input type="number" id="pw-m" value="27.0" step="0.1"><span class="unit">分</span></div>
+      <div class="inp-row"><span class="lbl">東端 東経</span><input type="number" id="pe-d" value="139"><span class="unit">度</span><input type="number" id="pe-m" value="36.5" step="0.1"><span class="unit">分</span></div>
+    </div>
+    <button class="btn btn-blue" onclick="applyPDFBounds()">この範囲でオーバーレイ表示</button>
+    <button class="btn btn-gray" onclick="closePDFBounds(null)">キャンセル</button>
+  </div>
+</div>
+
+<!-- GPS Overlay -->
+<div id="gps-overlay" class="overlay" onclick="hideGPSPanel(event)">
+  <div class="ov-panel" onclick="event.stopPropagation()">
+    <div class="ov-title">📍 GPS現在位置</div>
+    <div class="section" style="margin:0 0 12px;">
+      <div class="row"><span>北緯</span><span class="row-val" id="gp-lat">— 度 —.— 分</span></div>
+      <div class="row"><span>東経</span><span class="row-val" id="gp-lon">— 度 —.— 分</span></div>
+      <div class="row"><span>精度</span><span class="row-val" id="gp-acc">—</span></div>
+    </div>
+    <button class="btn btn-blue" onclick="useGPSAsRef()">現在位置 → 基準点に設定</button>
+    <button class="btn btn-gray" id="gps-toggle" onclick="toggleGPS()">GPS追跡 開始</button>
+    <button class="btn btn-gray" onclick="hideGPSPanel(null)">閉じる</button>
+  </div>
+</div>
+
+<script>
+let map=null,watchId=null,currentPos=null;
+let courseMarks=[],mapLayers=[],gpsLayer=null,gpsCircle=null;
+let pdfOverlay=null,pendingPdfFile=null;
+
+function showTab(name,btn){
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.remove('hidden');
+  if(btn)btn.classList.add('active');
+  if(name==='map')initMap();
+}
+
+
+function loadPDFOverlay(){document.getElementById('pdf-input').click();}
+
+function onPDFSelected(e){
+  const file=e.target.files[0];if(!file)return;
+  pendingPdfFile=file;
+  document.getElementById('pdf-bounds-dlg').classList.add('show');
+}
+
+function closePDFBounds(e){
+  if(!e||e.target===document.getElementById('pdf-bounds-dlg'))
+    document.getElementById('pdf-bounds-dlg').classList.remove('show');
+}
+
+function applyPDFBounds(){
+  if(!pendingPdfFile)return;
+  closePDFBounds(null);
+  const north=parseFloat(document.getElementById('pn-d').value)+parseFloat(document.getElementById('pn-m').value)/60;
+  const south=parseFloat(document.getElementById('ps-d').value)+parseFloat(document.getElementById('ps-m').value)/60;
+  const west=parseFloat(document.getElementById('pw-d').value)+parseFloat(document.getElementById('pw-m').value)/60;
+  const east=parseFloat(document.getElementById('pe-d').value)+parseFloat(document.getElementById('pe-m').value)/60;
+  const bounds=[[south,west],[north,east]];
+  const status=document.getElementById('pdf-status');
+  status.textContent='読み込み中…';
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    if(typeof pdfjsLib==='undefined'){status.textContent='pdf.js未読込';return;}
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const typedArray=new Uint8Array(ev.target.result);
+    pdfjsLib.getDocument({data:typedArray}).promise.then(pdf=>pdf.getPage(1)).then(page=>{
+      const vp=page.getViewport({scale:3});
+      const canvas=document.createElement('canvas');
+      canvas.width=vp.width;canvas.height=vp.height;
+      return page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise.then(()=>canvas);
+    }).then(canvas=>{
+      if(pdfOverlay)map.removeLayer(pdfOverlay);
+      pdfOverlay=L.imageOverlay(canvas.toDataURL('image/png'),bounds,{
+        opacity:parseFloat(document.getElementById('pdf-opacity').value)/100,
+        interactive:false,zIndex:10
+      }).addTo(map);
+      status.textContent='✓ '+pendingPdfFile.name;
+      document.getElementById('pdf-remove-btn').style.display='';
+      map.fitBounds(bounds);
+      pendingPdfFile=null;
+    }).catch(err=>{status.textContent='エラー: '+err.message;});
+  };
+  reader.readAsArrayBuffer(pendingPdfFile);
+}
+
+function updatePDFOpacity(v){
+  document.getElementById('pdf-opacity-val').textContent=v+'%';
+  if(pdfOverlay)pdfOverlay.setOpacity(v/100);
+}
+
+function removePDFOverlay(){
+  if(pdfOverlay){map.removeLayer(pdfOverlay);pdfOverlay=null;}
+  document.getElementById('pdf-remove-btn').style.display='none';
+  document.getElementById('pdf-status').textContent='';
+  document.getElementById('pdf-input').value='';
+}
+
+function onCourseChange(){
+  const v=document.querySelector('input[name="course"]:checked').value;
+  const nm=v.endsWith('-nm');
+  document.getElementById('sec-trap').classList.toggle('hidden',!v.startsWith('trapezoid'));
+  document.getElementById('sec-tri').classList.toggle('hidden',!v.startsWith('triangle'));
+  document.getElementById('sec-lr').classList.toggle('hidden',!v.startsWith('lr'));
+  document.getElementById('sec-start').classList.toggle('hidden',!v.startsWith('start'));
+  ['u-d14','u-fin','u-gw','u-t13','u-tgw','u-lr','u-lrsw','u-lrgw','u-ssw'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent=nm?'nm':'m';
+  });
+}
+
+const R=6371000,rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI;
+
+function dest(la,lo,b,d){
+  const br=rad(b),dr=d/R,p=rad(la),q=rad(lo);
+  const p2=Math.asin(Math.sin(p)*Math.cos(dr)+Math.cos(p)*Math.sin(dr)*Math.cos(br));
+  const q2=q+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(p),Math.cos(dr)-Math.sin(p)*Math.sin(p2));
+  return{lat:deg(p2),lon:deg(q2)};
+}
+
+function haversine(la1,lo1,la2,lo2){
+  const dL=rad(la2-la1),dO=rad(lo2-lo1);
+  const a=Math.sin(dL/2)**2+Math.cos(rad(la1))*Math.cos(rad(la2))*Math.sin(dO/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function bearing(la1,lo1,la2,lo2){
+  const dO=rad(lo2-lo1);
+  const y=Math.sin(dO)*Math.cos(rad(la2));
+  const x=Math.cos(rad(la1))*Math.sin(rad(la2))-Math.sin(rad(la1))*Math.cos(rad(la2))*Math.cos(dO);
+  return(deg(Math.atan2(y,x))+360)%360;
+}
+
+function fmtD(m){return m>=1000?(m/1000).toFixed(2)+'km':Math.round(m)+'m';}
+function nm2m(v){return v*1852;}
+function dmin(d,m){return parseFloat(d)+parseFloat(m)/60;}
+
+function getRef(){
+  return{
+    lat:dmin(document.getElementById('ref-latd').value,document.getElementById('ref-latm').value),
+    lon:dmin(document.getElementById('ref-lond').value,document.getElementById('ref-lonm').value)
+  };
+}
+
+function calcMarks(){
+  const type=document.querySelector('input[name="course"]:checked').value;
+  const nm=type.endsWith('-nm');
+  const ref=getRef();
+  const refMk=document.getElementById('refMark').value;
+  const marks=[];
+
+  if(type.startsWith('trapezoid')){
+    const W=+document.getElementById('p-wind').value;
+    let d14=+document.getElementById('p-d14').value;if(nm)d14=nm2m(d14);
+    const r12p=+document.getElementById('p-r12').value/100;
+    const r23p=+document.getElementById('p-r23').value/100;
+    const r412=+document.getElementById('p-r412').value;
+    const r123=+document.getElementById('p-r123').value;
+    let dFin=+document.getElementById('p-fin').value;if(nm)dFin=nm2m(dFin);
+    const r23f=+document.getElementById('p-r23f').value;
+    let gw=+document.getElementById('p-gw').value;if(nm)gw=nm2m(gw);
+    const d12=d14*r12p,d23=d14*r23p;
+    const b14=W;
+    const b12=(W+180-r412+360)%360;
+    const b23=(b12+(180-r123)+360)%360;
+    const b32=(b23+180)%360;
+    const b3f=(b32-(180-r23f)+360)%360;
+
+    let m4la=ref.lat,m4lo=ref.lon;
+    if(refMk==='m1'){const p=dest(ref.lat,ref.lon,(W+180)%360,d14);m4la=p.lat;m4lo=p.lon;}
+    else if(refMk==='m2'){const m1=dest(ref.lat,ref.lon,(b12+180)%360,d12);const p=dest(m1.lat,m1.lon,(W+180)%360,d14);m4la=p.lat;m4lo=p.lon;}
+    else if(refMk==='m3'){const m2=dest(ref.lat,ref.lon,(b23+180)%360,d23);const m1=dest(m2.lat,m2.lon,(b12+180)%360,d12);const p=dest(m1.lat,m1.lon,(W+180)%360,d14);m4la=p.lat;m4lo=p.lon;}
+
+    const m1=dest(m4la,m4lo,b14,d14);
+    const m2=dest(m1.lat,m1.lon,b12,d12);
+    const m3c=dest(m2.lat,m2.lon,b23,d23);
+    const mf=dest(m3c.lat,m3c.lon,b3f,dFin);
+    const gA=dest(m3c.lat,m3c.lon,(W+90)%360,gw/2);
+    const gB=dest(m3c.lat,m3c.lon,(W-90+360)%360,gw/2);
+    const outer=dest(m4la,m4lo,(W+90)%360,gw);
+
+    marks.push(
+      {id:'M4',label:'本船 (M4)',lat:m4la,lon:m4lo,color:'#D85A30',e:'🚢'},
+      {id:'M1',label:'上マーク (M1)',lat:m1.lat,lon:m1.lon,color:'#185FA5',e:'⬆'},
+      {id:'M2',label:'リーチングマーク (M2)',lat:m2.lat,lon:m2.lon,color:'#0F6E56',e:'↗'},
+      {id:'GA',label:'ゲートA (M3)',lat:gA.lat,lon:gA.lon,color:'#5F5E5A',e:'◻'},
+      {id:'GB',label:'ゲートB',lat:gB.lat,lon:gB.lon,color:'#5F5E5A',e:'◻'},
+      {id:'FIN',label:'フィニッシュ',lat:mf.lat,lon:mf.lon,color:'#BA7517',e:'🏁'},
+      {id:'OUT',label:'アウターマーク',lat:outer.lat,lon:outer.lon,color:'#993C1D',e:'◀'}
+    );
+
+  }else if(type.startsWith('triangle')){
+    const W=+document.getElementById('t-wind').value;
+    let d13=+document.getElementById('t-d13').value;if(nm)d13=nm2m(d13);
+    const r312=+document.getElementById('t-r312').value;
+    const r123=+document.getElementById('t-r123').value;
+    let gw=+document.getElementById('t-gw').value;if(nm)gw=nm2m(gw);
+    const sinS=Math.sin(rad(180-r312-r123))||0.001;
+    const d12=d13*Math.sin(rad(r123))/sinS;
+    const b31=W,b13=(W+180)%360,b12=(b13-r312+360)%360;
+    let m3la=ref.lat,m3lo=ref.lon;
+    if(refMk==='m1'){const p=dest(ref.lat,ref.lon,b13,d13);m3la=p.lat;m3lo=p.lon;}
+    const m1=dest(m3la,m3lo,b31,d13);
+    const m2=dest(m1.lat,m1.lon,b12,d12);
+    const gA=dest(m3la,m3lo,(W+90)%360,gw/2);
+    const gB=dest(m3la,m3lo,(W-90+360)%360,gw/2);
+    marks.push(
+      {id:'M3',label:'本船 (M3)',lat:m3la,lon:m3lo,color:'#D85A30',e:'🚢'},
+      {id:'M1',label:'上マーク (M1)',lat:m1.lat,lon:m1.lon,color:'#185FA5',e:'⬆'},
+      {id:'M2',label:'リーチングマーク (M2)',lat:m2.lat,lon:m2.lon,color:'#0F6E56',e:'↗'},
+      {id:'GA',label:'ゲートA',lat:gA.lat,lon:gA.lon,color:'#5F5E5A',e:'◻'},
+      {id:'GB',label:'ゲートB',lat:gB.lat,lon:gB.lon,color:'#5F5E5A',e:'◻'}
+    );
+
+  }else if(type.startsWith('lr')){
+    const W=+document.getElementById('lr-wind').value;
+    let d=+document.getElementById('lr-d').value;if(nm)d=nm2m(d);
+    let sw=+document.getElementById('lr-sw').value;if(nm)sw=nm2m(sw);
+    let gw=+document.getElementById('lr-gw').value;if(nm)gw=nm2m(gw);
+    const top=dest(ref.lat,ref.lon,W,d);
+    const pin=dest(ref.lat,ref.lon,(W-90+360)%360,sw);
+    const gA=dest(top.lat,top.lon,(W+90)%360,gw/2);
+    const gB=dest(top.lat,top.lon,(W-90+360)%360,gw/2);
+    marks.push(
+      {id:'CB',label:'本船 (スタート)',lat:ref.lat,lon:ref.lon,color:'#D85A30',e:'🚢'},
+      {id:'PIN',label:'ピン (スタート)',lat:pin.lat,lon:pin.lon,color:'#993C1D',e:'📌'},
+      {id:'TOP',label:'上マーク',lat:top.lat,lon:top.lon,color:'#185FA5',e:'⬆'},
+      {id:'GA',label:'ゲートA',lat:gA.lat,lon:gA.lon,color:'#5F5E5A',e:'◻'},
+      {id:'GB',label:'ゲートB',lat:gB.lat,lon:gB.lon,color:'#5F5E5A',e:'◻'}
+    );
+
+  }else{
+    const W=+document.getElementById('s-wind').value;
+    const sw=+document.getElementById('s-sw').value;
+    const pin=dest(ref.lat,ref.lon,(W-90+360)%360,sw);
+    marks.push(
+      {id:'CB',label:'本船',lat:ref.lat,lon:ref.lon,color:'#D85A30',e:'🚢'},
+      {id:'PIN',label:'ピン',lat:pin.lat,lon:pin.lon,color:'#993C1D',e:'📌'}
+    );
+  }
+  return marks;
+}
+
+function recalc(){
+  try{courseMarks=calcMarks();renderTable();renderShare();if(map)renderMapMarks();}
+  catch(e){console.error(e);}
+}
+
+function calcAndMap(){
+  recalc();
+  document.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-map').classList.remove('hidden');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+  initMap();
+}
+
+function initMap(){
+  if(map)return;
+  const ref=getRef();
+  map=L.map('map').setView([ref.lat,ref.lon],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+  map.on('mousemove',function(e){
+    if(!courseMarks.length)return;
+    const last=courseMarks[courseMarks.length-1];
+    const d=haversine(last.lat,last.lon,e.latlng.lat,e.latlng.lng);
+    const b=bearing(last.lat,last.lon,e.latlng.lat,e.latlng.lng);
+    document.getElementById('lv-cursor').textContent=
+      `カーソル: ${last.label}から ${fmtD(d)} / ${Math.round(b)}°`;
+  });
+  if(courseMarks.length)renderMapMarks();
+}
+
+function mkIcon(m){
+  return L.divIcon({
+    html:`<div style="background:${m.color};color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.4);">${m.e}</div>`,
+    iconSize:[36,36],iconAnchor:[18,18],className:''
+  });
+}
+
+function renderMapMarks(){
+  mapLayers.forEach(l=>{if(map.hasLayer(l))map.removeLayer(l);});
+  mapLayers=[];
+  if(!courseMarks.length)return;
+  const lls=courseMarks.map(m=>[m.lat,m.lon]);
+  const line=L.polyline(lls,{color:'#378ADD',weight:2,dashArray:'6,4',opacity:0.8}).addTo(map);
+  mapLayers.push(line);
+  courseMarks.forEach(m=>{
+    const mk=L.marker([m.lat,m.lon],{icon:mkIcon(m)}).addTo(map);
+    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
+    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
+    mk.bindPopup(`<b>${m.label}</b><br>北緯${latD}度${latM}分<br>東経${lonD}度${lonM}分`);
+    mapLayers.push(mk);
+  });
+  map.fitBounds(lls,{padding:[40,40]});
+}
+
+function showGPSPanel(){document.getElementById('gps-overlay').classList.add('show');}
+function hideGPSPanel(e){
+  if(!e||e.target===document.getElementById('gps-overlay'))
+    document.getElementById('gps-overlay').classList.remove('show');
+}
+
+function toggleGPS(){
+  const btn=document.getElementById('gps-toggle');
+  if(watchId!==null){
+    navigator.geolocation.clearWatch(watchId);watchId=null;
+    if(gpsLayer&&map){map.removeLayer(gpsLayer);gpsLayer=null;}
+    if(gpsCircle&&map){map.removeLayer(gpsCircle);gpsCircle=null;}
+    currentPos=null;
+    btn.textContent='GPS追跡 開始';
+    ['lv-ref','lv-acc','lv-dist','lv-brng'].forEach(id=>document.getElementById(id).textContent='—');
+  }else{
+    if(!navigator.geolocation){alert('GPSが利用できません');return;}
+    btn.textContent='GPS追跡 停止';
+    watchId=navigator.geolocation.watchPosition(onGPS,()=>{
+      document.getElementById('lv-acc').textContent='エラー';
+    },{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+  }
+}
+
+function onGPS(pos){
+  currentPos={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+  const{lat,lon,acc}=currentPos;
+  const latD=Math.floor(lat),latM=((lat-latD)*60).toFixed(4);
+  const lonD=Math.floor(lon),lonM=((lon-lonD)*60).toFixed(4);
+  document.getElementById('gp-lat').textContent=`${latD}度 ${latM}分`;
+  document.getElementById('gp-lon').textContent=`${lonD}度 ${lonM}分`;
+  document.getElementById('gp-acc').textContent=`±${Math.round(acc)}m`;
+  document.getElementById('lv-acc').textContent=`±${Math.round(acc)}m`;
+  if(courseMarks.length){
+    const ref=courseMarks[0];
+    document.getElementById('lv-ref').textContent=fmtD(haversine(lat,lon,ref.lat,ref.lon));
+    const last=courseMarks[courseMarks.length-1];
+    document.getElementById('lv-dist').textContent=fmtD(haversine(lat,lon,last.lat,last.lon));
+    document.getElementById('lv-brng').textContent=Math.round(bearing(lat,lon,last.lat,last.lon))+'°';
+  }
+  if(map){
+    const icon=L.divIcon({
+      html:`<div style="background:#007AFF;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>`,
+      iconSize:[14,14],iconAnchor:[7,7],className:''
+    });
+    if(!gpsLayer){
+      gpsLayer=L.marker([lat,lon],{icon,zIndexOffset:1000}).addTo(map);
+      gpsCircle=L.circle([lat,lon],{radius:acc,color:'#007AFF',fillColor:'#007AFF',fillOpacity:0.08,weight:1}).addTo(map);
+    }else{gpsLayer.setLatLng([lat,lon]);gpsLayer.setIcon(icon);gpsCircle.setLatLng([lat,lon]);gpsCircle.setRadius(acc);}
+  }
+}
+
+function useGPSAsRef(){
+  if(currentPos){setRef(currentPos);return;}
+  if(!navigator.geolocation){alert('GPSが利用できません');return;}
+  navigator.geolocation.getCurrentPosition(p=>{
+    currentPos={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};
+    setRef(currentPos);
+  },()=>alert('位置情報の取得に失敗しました'),{enableHighAccuracy:true,timeout:10000});
+}
+
+function setRef(pos){
+  const latD=Math.floor(pos.lat),latM=((pos.lat-latD)*60).toFixed(4);
+  const lonD=Math.floor(pos.lon),lonM=((pos.lon-lonD)*60).toFixed(4);
+  document.getElementById('ref-latd').value=latD;
+  document.getElementById('ref-latm').value=latM;
+  document.getElementById('ref-lond').value=lonD;
+  document.getElementById('ref-lonm').value=lonM;
+  hideGPSPanel(null);recalc();
+}
+
+function renderTable(){
+  const ref=courseMarks[0];if(!ref)return;
+  let h='<tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr>';
+  courseMarks.forEach(m=>{
+    const d=haversine(ref.lat,ref.lon,m.lat,m.lon);
+    const b=bearing(ref.lat,ref.lon,m.lat,m.lon);
+    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
+    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
+    h+=`<tr>
+      <td><span style="background:${m.color};border-radius:50%;padding:1px 5px;color:white;font-size:11px;">${m.e}</span> ${m.label}</td>
+      <td style="font-size:11px;color:#555;">${latD}°${latM}'</td>
+      <td style="font-size:11px;color:#555;">${lonD}°${lonM}'</td>
+      <td style="font-weight:600;">${m.id===ref.id?'基準':fmtD(d)}</td>
+      <td>${m.id===ref.id?'—':Math.round(b)+'°'}</td>
+    </tr>`;
+  });
+  document.getElementById('mark-table').innerHTML=h;
+}
+
+function renderShare(){
+  let t='【マークレイヤー座標】\n';
+  courseMarks.forEach(m=>{
+    const latD=Math.floor(m.lat),latM=((m.lat-latD)*60).toFixed(4);
+    const lonD=Math.floor(m.lon),lonM=((m.lon-lonD)*60).toFixed(4);
+    t+=`${m.label}: 北緯${latD}度${latM}分 東経${lonD}度${lonM}分\n`;
+  });
+  document.getElementById('share-text').textContent=t;
+}
+
+function shareToLINE(){
+  const t=document.getElementById('share-text').textContent;
+  window.open('https://line.me/R/msg/text/?'+encodeURIComponent(t));
+}
+
+function copyCoords(){
+  const t=document.getElementById('share-text').textContent;
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('コピーしました'));
+  else{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('コピーしました');}
+}
+
+onCourseChange();recalc();
+</script>
+</body>
+</html>
