@@ -201,6 +201,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
         <div class="field"><span class="flbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
         <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('t-wind',-5,0,359,true)">−</button><input type="number" id="t-wind" value="0" oninput="recalc()"><button onclick="step('t-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-3距離</span><div class="stepper"><button onclick="step('t-d13',-50,0,99999)">−</button><input type="number" id="t-d13" value="700" oninput="recalc()"><button onclick="step('t-d13',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">3-4距離</span><input type="number" id="t-d34" value="250" oninput="recalc()"><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">スタート-4距離</span><input type="number" id="t-s4" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">3-1-2内角</span><input type="number" id="t-r312" value="60" oninput="recalc()"><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-2-3内角</span><input type="number" id="t-r123" value="60" oninput="recalc()"><span class="funit">°</span></div>
         <div class="field"><span class="flbl">ゲート幅</span><input type="number" id="t-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
@@ -340,7 +342,7 @@ let rChart=null,pChart=null;
 
 const REFOPTS={
   trapezoid:[['M4','本船 (M4)'],['M1','上マーク (M1)'],['M2','リーチング (M2)'],['M3','ゲート (M3)']],
-  triangle:[['M3','本船 (M3)'],['M1','上マーク (M1)'],['M2','サイド (M2)']],
+  triangle:[['CB','本船 (スタート)'],['M1','上マーク (1)'],['M2','サイド (2)'],['M3','マーク3'],['M4','マーク4(下)']],
   lr:[['CB','本船'],['PIN','ピン'],['TOP','上マーク']],
   start:[['CB','本船'],['PIN','ピン']],
   wlo:[['DN','下マーク'],['UP','上マーク']],
@@ -487,15 +489,25 @@ function calcMarks(){
       marks.legs=[[M1.lat,M1.lon],[M4.lat,M4.lon],[M1.lat,M1.lon],[M2.lat,M2.lon],[M3.lat,M3.lon]];
     }
   }else if(type==='triangle'||type==='trio'){
-    const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),gw=val('t-gw')*k;
-    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
-    const sinS=Math.sin(rad(180-r312-r123))||0.001,d12=d13*Math.sin(rad(r123))/sinS;
-    const b31=W,b13=(W+180)%360,b12=(b13-r312+360)%360;
-    const M3=ref,M1=D(M3.lat,M3.lon,b31,d13),M2=D(M1.lat,M1.lon,b12,d12);
-    const GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2);
-    basisMap={M3,M1,M2};
-    const isR=type==='triangle';
-    marks=[mk('M3',isR?'本船 (M3)':'下マーク (M3)',M3,isR?'boat':'down',isR?'本':'下'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','サイド (M2)',M2,'side','横'),mk('GA','下ゲート 3s',GA,'gate','3s'),mk('GB','下ゲート 3p',GB,'gate','3p')];
+    // レース三角形(写真準拠): 本船=スタート→真上s4に4(下)→真上d34に3→真上d13に1(上)。
+    // 三角形1-2-3(2は左)。回航 Start-1-2-3-1-4-Finish。Finishは4から右斜め下(120°)。
+    const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123');
+    const ang3=180-r312-r123,L12=d13*Math.sin(rad(ang3))/(Math.sin(rad(r123))||0.001);
+    const b12=(W+180+r312)%360;          // 1→2(左)
+    if(type==='triangle'){
+      const d34=val('t-d34')*k,s4=val('t-s4')*k,sw=150*k;
+      const ST=ref,PIN=dest(ST.lat,ST.lon,(W+270)%360,sw);
+      const M4=dest(ST.lat,ST.lon,W,s4),M3=dest(M4.lat,M4.lon,W,d34),M1=dest(M3.lat,M3.lon,W,d13),M2=dest(M1.lat,M1.lon,b12,L12);
+      const FIN=dest(M4.lat,M4.lon,(W+120)%360,200*k);
+      basisMap={CB:ST,M1,M2,M3,M4};
+      marks=[mk('CB','本船 (スタート)',ST,'boat','本'),mk('PIN','ピン',PIN,'pin','P'),mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('M3','マーク3',M3,'mark','3'),mk('M4','リーワード (4)',M4,'mark','4'),mk('FIN','フィニッシュ',FIN,'fin','F')];
+      marks.legs=[[ST.lat,ST.lon],[M1.lat,M1.lon],[M2.lat,M2.lon],[M3.lat,M3.lon],[M1.lat,M1.lon],[M4.lat,M4.lon],[FIN.lat,FIN.lon]];
+    }else{
+      const M1=ref,M3=dest(M1.lat,M1.lon,(W+180)%360,d13),M2=dest(M1.lat,M1.lon,b12,L12);
+      basisMap={M1,M2,M3};
+      marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('M3','マーク3',M3,'mark','3')];
+      marks.legs=[[M1.lat,M1.lon],[M2.lat,M2.lon],[M3.lat,M3.lon],[M1.lat,M1.lon]];
+    }
   }else if(type==='lr'){
     // 上下(W/L): 本船=スタート(下端)→真上sdに下ゲート2s/2p→真上dに上マーク1。Finishは2pから右斜め下(120°)。
     const W=val('lr-wind'),d=val('lr-d')*k,sw=val('lr-sw')*k,gw=val('lr-gw')*k,sd=val('lr-sd')*k;
