@@ -323,7 +323,11 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
 
 <script>
 const CHART_URL='sagami-chart.pdf';
-const CHART_BOUNDS=[[35+11.5/60,139+27.0/60],[35+22.5/60,139+36.5/60]];
+// PDF全ページ(MediaBox)を imageOverlay する前提の四隅[緯度,経度]。
+// PDFをラスタ化し経緯度グリッド(縦横とも0.5'間隔)をピクセル検出→線形フィット(残差約4m)し、
+// 画像四隅(x=0..W, y=0..H)へ外挿した実測値。経度約987.8px/分・緯度約1203.4px/分(メルカトル比1.218)。
+// 旧値[[35+11.5/60,...],[35+22.5/60,...]]は緯度2.78倍・経度1.39倍に伸びておりズレの原因だった。
+const CHART_BOUNDS=[[35.246665,139.464602],[35.312631,139.578253]];
 
 let mode='home';
 let raceMap=null,pMap=null,watchId=null,currentPos=null;
