@@ -457,44 +457,51 @@ function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,
 function calcMarks(){
   const type=curType(),ref=getRef(),refMk=document.getElementById('refMark').value,k=isNM()?1852:1;
   let marks=[],basisMap={};
+  // 全コースを反時計回り(ポート回り)で生成する。各 dest の方位を風軸(W)で左右反射 β→2W−β する D で包む。
+  // これにより 風上=上, スタートライン=右, サイドマーク=左 の標準レイアウトになる。
+  // ゲートは GA=西=スターボード側(s), GB=東=ポート側(p)。番号: トラペ=4, トライアングル=3, 上下(W/L)=2。
   if(type==='trapezoid'||type==='trapo'){
     const W=val('p-wind'),d14=val('p-d14')*k,d12=d14*val('p-r12')/100,d23=d14*val('p-r23')/100;
     const r412=val('p-r412'),r123=val('p-r123'),gw=val('p-gw')*k;
+    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
     const b14=W,b12=(W+180-r412+360)%360,b23=(b12+(180-r123)+360)%360;
     if(type==='trapezoid'){
-      const M4=ref,M1=dest(M4.lat,M4.lon,b14,d14),M2=dest(M1.lat,M1.lon,b12,d12),M3=dest(M2.lat,M2.lon,b23,d23);
+      const M4=ref,M1=D(M4.lat,M4.lon,b14,d14),M2=D(M1.lat,M1.lon,b12,d12),M3=D(M2.lat,M2.lon,b23,d23);
       const dFin=val('p-fin')*k,r23f=val('p-r23f'),b32=(b23+180)%360,b3f=(b32-(180-r23f)+360)%360;
-      const FIN=dest(M3.lat,M3.lon,b3f,dFin),GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2),OUT=dest(M4.lat,M4.lon,(W+90)%360,gw);
+      const FIN=D(M3.lat,M3.lon,b3f,dFin),GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2),OUT=D(M4.lat,M4.lon,(W+90)%360,gw);
       basisMap={M4,M1,M2,M3};
-      marks=[mk('M4','本船 (M4)',M4,'boat','本'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','ゲートA (M3)',GA,'gate','3p'),mk('GB','ゲートB',GB,'gate','3s'),mk('FIN','フィニッシュ',FIN,'fin','F'),mk('OUT','アウター',OUT,'outer','A')];
+      marks=[mk('M4','本船 (M4)',M4,'boat','本'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲート 4s',GA,'gate','4s'),mk('GB','下ゲート 4p',GB,'gate','4p'),mk('FIN','フィニッシュ',FIN,'fin','F'),mk('OUT','アウター',OUT,'outer','A')];
     }else{
-      const M1=ref,M2=dest(M1.lat,M1.lon,b12,d12),M3=dest(M2.lat,M2.lon,b23,d23);
-      const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
+      const M1=ref,M2=D(M1.lat,M1.lon,b12,d12),M3=D(M2.lat,M2.lon,b23,d23);
+      const GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2);
       basisMap={M1,M2,M3};
-      marks=[mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲートA (M3)',GA,'gate','3p'),mk('GB','下ゲートB',GB,'gate','3s')];
+      marks=[mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲート 4s',GA,'gate','4s'),mk('GB','下ゲート 4p',GB,'gate','4p')];
     }
   }else if(type==='triangle'||type==='trio'){
     const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),gw=val('t-gw')*k;
+    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
     const sinS=Math.sin(rad(180-r312-r123))||0.001,d12=d13*Math.sin(rad(r123))/sinS;
     const b31=W,b13=(W+180)%360,b12=(b13-r312+360)%360;
-    const M3=ref,M1=dest(M3.lat,M3.lon,b31,d13),M2=dest(M1.lat,M1.lon,b12,d12);
-    const GA=dest(M3.lat,M3.lon,(W+90)%360,gw/2),GB=dest(M3.lat,M3.lon,(W-90+360)%360,gw/2);
+    const M3=ref,M1=D(M3.lat,M3.lon,b31,d13),M2=D(M1.lat,M1.lon,b12,d12);
+    const GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2);
     basisMap={M3,M1,M2};
     const isR=type==='triangle';
-    marks=[mk('M3',isR?'本船 (M3)':'下マーク (M3)',M3,isR?'boat':'down',isR?'本':'下'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','サイド (M2)',M2,'side','横'),mk('GA','ゲートA',GA,'gate','3p'),mk('GB','ゲートB',GB,'gate','3s')];
+    marks=[mk('M3',isR?'本船 (M3)':'下マーク (M3)',M3,isR?'boat':'down',isR?'本':'下'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','サイド (M2)',M2,'side','横'),mk('GA','下ゲート 3s',GA,'gate','3s'),mk('GB','下ゲート 3p',GB,'gate','3p')];
   }else if(type==='lr'){
     const W=val('lr-wind'),d=val('lr-d')*k,sw=val('lr-sw')*k,gw=val('lr-gw')*k;
-    const CB=ref,TOP=dest(CB.lat,CB.lon,W,d),PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
-    const GA=dest(TOP.lat,TOP.lon,(W+90)%360,gw/2),GB=dest(TOP.lat,TOP.lon,(W-90+360)%360,gw/2);
+    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
+    const CB=ref,TOP=D(CB.lat,CB.lon,W,d),PIN=D(CB.lat,CB.lon,(W-90+360)%360,sw);
+    const GA=D(TOP.lat,TOP.lon,(W+90)%360,gw/2),GB=D(TOP.lat,TOP.lon,(W-90+360)%360,gw/2);
     basisMap={CB,PIN,TOP};
-    marks=[mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'),mk('TOP','上マーク',TOP,'up','上'),mk('GA','下ゲートA',GA,'gate','2p'),mk('GB','下ゲートB',GB,'gate','2s')];
+    marks=[mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'),mk('TOP','上マーク',TOP,'up','上'),mk('GA','下ゲート 2s',GA,'gate','2s'),mk('GB','下ゲート 2p',GB,'gate','2p')];
   }else if(type==='wlo'){
     const W=val('w-wind'),d=val('w-d')*k,gw=val('w-gw')*k;
-    const DN=ref,UP=dest(DN.lat,DN.lon,W,d),GA=dest(DN.lat,DN.lon,(W+90)%360,gw/2),GB=dest(DN.lat,DN.lon,(W-90+360)%360,gw/2);
+    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
+    const DN=ref,UP=D(DN.lat,DN.lon,W,d),GA=D(DN.lat,DN.lon,(W+90)%360,gw/2),GB=D(DN.lat,DN.lon,(W-90+360)%360,gw/2);
     basisMap={DN,UP};
-    marks=[mk('UP','上マーク',UP,'up','上'),mk('GA','下ゲートA',GA,'gate','2p'),mk('GB','下ゲートB',GB,'gate','2s')];
+    marks=[mk('UP','上マーク',UP,'up','上'),mk('GA','下ゲート 2s',GA,'gate','2s'),mk('GB','下ゲート 2p',GB,'gate','2p')];
   }else{
-    const W=val('s-wind'),sw=val('s-sw'),CB=ref,PIN=dest(CB.lat,CB.lon,(W-90+360)%360,sw);
+    const W=val('s-wind'),sw=val('s-sw'),D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d),CB=ref,PIN=D(CB.lat,CB.lon,(W-90+360)%360,sw);
     basisMap={CB,PIN};
     marks=[mk('CB','本船',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P')];
   }
