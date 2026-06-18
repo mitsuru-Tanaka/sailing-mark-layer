@@ -461,21 +461,25 @@ function calcMarks(){
   // これにより 風上=上, スタートライン=右, サイドマーク=左 の標準レイアウトになる。
   // ゲートは GA=西=スターボード側(s), GB=東=ポート側(p)。番号: トラペ=4, トライアングル=3, 上下(W/L)=2。
   if(type==='trapezoid'||type==='trapo'){
-    const W=val('p-wind'),d14=val('p-d14')*k,d12=d14*val('p-r12')/100,d23=d14*val('p-r23')/100;
+    // 反時計回り標準トラペ: 1=上, 4ゲート=1の真下(W/L部下端), 2=1からリーチ(左), 3ゲート=2の真下, Finish=3の先。
+    const W=val('p-wind'),d14=val('p-d14')*k,a=d14*val('p-r12')/100,b=d14*val('p-r23')/100;
     const r412=val('p-r412'),r123=val('p-r123'),gw=val('p-gw')*k;
-    const D=(la,lo,b,d)=>dest(la,lo,(2*W-b+720)%360,d);
-    const b14=W,b12=(W+180-r412+360)%360,b23=(b12+(180-r123)+360)%360;
+    const b12=(W+180+r412)%360,b23=(b12+180+r123)%360;   // 1→2(リーチ,左), 2→3(下)
+    const gS=(W+270)%360,gP=(W+90)%360;                  // ゲート s=西(左), p=東(右)
     if(type==='trapezoid'){
-      const M4=ref,M1=D(M4.lat,M4.lon,b14,d14),M2=D(M1.lat,M1.lon,b12,d12),M3=D(M2.lat,M2.lon,b23,d23);
-      const dFin=val('p-fin')*k,r23f=val('p-r23f'),b32=(b23+180)%360,b3f=(b32-(180-r23f)+360)%360;
-      const FIN=D(M3.lat,M3.lon,b3f,dFin),GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2),OUT=D(M4.lat,M4.lon,(W+90)%360,gw);
+      const M4=ref;                                      // 本船=W/L軸下端(4ゲート中心)
+      const M1=dest(M4.lat,M4.lon,W,d14),M2=dest(M1.lat,M1.lon,b12,a),M3=dest(M2.lat,M2.lon,b23,b);
+      const dFin=val('p-fin')*k,r23f=val('p-r23f'),b3f=(b23+(180-r23f)+360)%360,FIN=dest(M3.lat,M3.lon,b3f,dFin);
+      const G4s=dest(M4.lat,M4.lon,gS,gw/2),G4p=dest(M4.lat,M4.lon,gP,gw/2),G3s=dest(M3.lat,M3.lon,gS,gw/2),G3p=dest(M3.lat,M3.lon,gP,gw/2);
       basisMap={M4,M1,M2,M3};
-      marks=[mk('M4','本船 (M4)',M4,'boat','本'),mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲート 4s',GA,'gate','4s'),mk('GB','下ゲート 4p',GB,'gate','4p'),mk('FIN','フィニッシュ',FIN,'fin','F'),mk('OUT','アウター',OUT,'outer','A')];
+      marks=[mk('M4','本船 (M4)',M4,'boat','本'),mk('M1','上マーク (1)',M1,'up','上'),mk('M2','リーチング (2)',M2,'side','横'),mk('G4s','下ゲート 4s',G4s,'gate','4s'),mk('G4p','下ゲート 4p',G4p,'gate','4p'),mk('G3s','下ゲート 3s',G3s,'gate','3s'),mk('G3p','下ゲート 3p',G3p,'gate','3p'),mk('FIN','フィニッシュ',FIN,'fin','F')];
+      marks.legs=[[M4.lat,M4.lon],[M1.lat,M1.lon],[M4.lat,M4.lon],[M1.lat,M1.lon],[M2.lat,M2.lon],[M3.lat,M3.lon],[FIN.lat,FIN.lon]];
     }else{
-      const M1=ref,M2=D(M1.lat,M1.lon,b12,d12),M3=D(M2.lat,M2.lon,b23,d23);
-      const GA=D(M3.lat,M3.lon,(W+90)%360,gw/2),GB=D(M3.lat,M3.lon,(W-90+360)%360,gw/2);
-      basisMap={M1,M2,M3};
-      marks=[mk('M1','上マーク (M1)',M1,'up','上'),mk('M2','リーチング (M2)',M2,'side','横'),mk('GA','下ゲート 4s',GA,'gate','4s'),mk('GB','下ゲート 4p',GB,'gate','4p')];
+      const M1=ref,M4=dest(M1.lat,M1.lon,(W+180)%360,d14),M2=dest(M1.lat,M1.lon,b12,a),M3=dest(M2.lat,M2.lon,b23,b);
+      const G4s=dest(M4.lat,M4.lon,gS,gw/2),G4p=dest(M4.lat,M4.lon,gP,gw/2),G3s=dest(M3.lat,M3.lon,gS,gw/2),G3p=dest(M3.lat,M3.lon,gP,gw/2);
+      basisMap={M1,M2};
+      marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','リーチング (2)',M2,'side','横'),mk('G4s','下ゲート 4s',G4s,'gate','4s'),mk('G4p','下ゲート 4p',G4p,'gate','4p'),mk('G3s','下ゲート 3s',G3s,'gate','3s'),mk('G3p','下ゲート 3p',G3p,'gate','3p')];
+      marks.legs=[[M1.lat,M1.lon],[M4.lat,M4.lon],[M1.lat,M1.lon],[M2.lat,M2.lon],[M3.lat,M3.lon]];
     }
   }else if(type==='triangle'||type==='trio'){
     const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),gw=val('t-gw')*k;
@@ -506,8 +510,11 @@ function calcMarks(){
     marks=[mk('CB','本船',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P')];
   }
   const basis=basisMap[refMk];
-  if(basis){const dLat=ref.lat-basis.lat,dLon=ref.lon-basis.lon;marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});}
+  if(basis){const dLat=ref.lat-basis.lat,dLon=ref.lon-basis.lon;marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});
+    if(marks.legs)marks.legs=marks.legs.map(p=>[p[0]+dLat,p[1]+dLon]);}
+  const legs=marks.legs;
   marks.sort((a,b)=>(a.id===refMk?-1:b.id===refMk?1:0));
+  if(legs)marks.legs=legs;
   return marks;
 }
 function recalc(){try{updateUnitLabels();courseMarks=calcMarks();renderTable();renderShare();if(raceMap)renderRMarks();}catch(e){console.error(e);}}
@@ -525,7 +532,8 @@ function renderRMarks(){
   rLayers.forEach(l=>raceMap.removeLayer(l));rLayers=[];
   if(!courseMarks.length)return;
   const lls=courseMarks.map(m=>[m.lat,m.lon]);
-  rLayers.push(L.polyline(lls,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:0.85}).addTo(raceMap));
+  const path=courseMarks.legs||lls;   // 点線はレグ順(Start→1→4→1→2→3→Finish 等)
+  rLayers.push(L.polyline(path,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:0.85}).addTo(raceMap));
   const refM=courseMarks[0];
   courseMarks.forEach(m=>{const mk2=L.marker([m.lat,m.lon],{icon:icon(m.txt,m===refM)}).addTo(raceMap);
     mk2.bindPopup('<b>'+m.label+'</b><br>'+fmtLL(m.lat)+' / '+fmtLL(m.lon));rLayers.push(mk2);});
