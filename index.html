@@ -418,14 +418,13 @@ function setChartOpacity(which,v){
 }
 
 /* ---------- marker icon ---------- */
-const SHAPE={
-  up:{c:'#E63946',r:'50%'}, side:{c:'#00B368',r:'50%'}, gate:{c:'#F4A300',r:'4px'},
-  boat:{c:'#0A2540',r:'4px'}, pin:{c:'#FF6B1A',r:'50%'}, fin:{c:'#7B2FF7',r:'4px'},
-  outer:{c:'#E63946',r:'4px'}, down:{c:'#00A3E0',r:'50%'}, p:{c:'#FF6B1A',r:'50%'}
-};
-function icon(kind,txt){
-  const s=SHAPE[kind]||{c:'#0A2540',r:'50%'};
-  return L.divIcon({html:'<div style="background:'+s.c+';color:#fff;width:30px;height:30px;border-radius:'+s.r+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(10,37,64,0.45);">'+txt+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});
+// マップ上のマーク名: 本船=s, アウター=o, フィニッシュ=f, ピン=p, それ以外の回航マーク=m1/m2/m3
+const MARK_CODE={boat:'s',outer:'o',fin:'f',pin:'p',up:'m1',side:'m2',gate:'m3',down:'m3'};
+const COL_MARK='#0A2540',COL_REF='#E63946';   // 通常マーク=ネイビー / 基準マーク=レッド
+// 全マークは同一の小さな丸。基準マークだけ色を変える。
+function icon(txt,isRef){
+  const c=isRef?COL_REF:COL_MARK;
+  return L.divIcon({html:'<div style="background:'+c+';color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 4px rgba(10,37,64,0.5);">'+txt+'</div>',iconSize:[24,24],iconAnchor:[12,12],className:''});
 }
 function gpsIcon(){return L.divIcon({html:'<div style="width:16px;height:16px;border-radius:50%;background:#00A3E0;border:3px solid #fff;box-shadow:0 0 0 2px #00A3E0,0 2px 6px rgba(0,0,0,.4);"></div>',iconSize:[16,16],iconAnchor:[8,8],className:''});}
 
@@ -451,7 +450,7 @@ function isNM(){const id=unitSelId();return id?document.getElementById(id).value
 function updateUnitLabels(){const u=isNM()?'nm':'m';document.querySelectorAll('.udist').forEach(el=>el.textContent=u);}
 function getRef(){return{lat:dmin(val('ref-latd'),document.getElementById('ref-latm').value),lon:dmin(val('ref-lond'),document.getElementById('ref-lonm').value)};}
 
-function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,txt};}
+function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,txt:MARK_CODE[kind]||txt};}
 
 function calcMarks(){
   const type=curType(),ref=getRef(),refMk=document.getElementById('refMark').value,k=isNM()?1852:1;
@@ -518,7 +517,8 @@ function renderRMarks(){
   if(!courseMarks.length)return;
   const lls=courseMarks.map(m=>[m.lat,m.lon]);
   rLayers.push(L.polyline(lls,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:0.85}).addTo(raceMap));
-  courseMarks.forEach(m=>{const mk2=L.marker([m.lat,m.lon],{icon:icon(m.kind,m.txt)}).addTo(raceMap);
+  const refM=courseMarks[0];
+  courseMarks.forEach(m=>{const mk2=L.marker([m.lat,m.lon],{icon:icon(m.txt,m===refM)}).addTo(raceMap);
     mk2.bindPopup('<b>'+m.label+'</b><br>'+fmtLL(m.lat)+' / '+fmtLL(m.lon));rLayers.push(mk2);});
   raceMap.fitBounds(lls,{padding:[60,60],maxZoom:16});
 }
@@ -526,8 +526,8 @@ function renderTable(){
   const ref=courseMarks[0];if(!ref)return;
   let h='<tr><th>マーク</th><th>北緯</th><th>東経</th><th>基準から</th><th>方位</th></tr>';
   courseMarks.forEach(m=>{const d=haversine(ref.lat,ref.lon,m.lat,m.lon),b=bearing(ref.lat,ref.lon,m.lat,m.lon);
-    const s=SHAPE[m.kind]||{c:'#0A2540'};
-    h+='<tr><td><span class="chip" style="background:'+s.c+'">'+m.txt+'</span>'+m.label+'</td><td>'+fmtLL(m.lat)+'</td><td>'+fmtLL(m.lon)+'</td><td><b>'+(m.id===ref.id?'基準':fmtD(d))+'</b></td><td>'+(m.id===ref.id?'—':Math.round(b)+'°')+'</td></tr>';});
+    const cc=m.id===ref.id?COL_REF:COL_MARK;
+    h+='<tr><td><span class="chip" style="background:'+cc+'">'+m.txt+'</span>'+m.label+'</td><td>'+fmtLL(m.lat)+'</td><td>'+fmtLL(m.lon)+'</td><td><b>'+(m.id===ref.id?'基準':fmtD(d))+'</b></td><td>'+(m.id===ref.id?'—':Math.round(b)+'°')+'</td></tr>';});
   document.getElementById('mtbl').innerHTML=h;
 }
 function renderShare(){let t='【マークレイヤー座標】\n';courseMarks.forEach(m=>{t+=m.label+': 北緯'+fmtLL(m.lat)+' 東経'+fmtLL(m.lon)+'\n';});document.getElementById('share-text').textContent=t;}
@@ -567,7 +567,7 @@ function addPMark(lat,lon){
   const n=pMarks.length+1;
   const m={lat,lon,n};
   const isBase=pMarks.length===0;
-  m.marker=L.marker([lat,lon],{icon:icon(isBase?'pin':'up',isBase?'基':String(n)),draggable:true}).addTo(pMap);
+  m.marker=L.marker([lat,lon],{icon:icon('m'+n,isBase),draggable:true}).addTo(pMap);
   m.marker.on('dragend',ev=>{const ll=ev.target.getLatLng();m.lat=ll.lat;m.lon=ll.lng;drawWindAxis();updatePHUD();});
   pMarks.push(m);
   drawWindAxis();updatePHUD();
@@ -578,7 +578,7 @@ function markHere(){
   else alert('GPS不可。地図タップでマークできます');
 }
 function undoPMark(){const m=pMarks.pop();if(m)pMap.removeLayer(m.marker);
-  pMarks.forEach((mm,i)=>{const isBase=i===0;mm.marker.setIcon(icon(isBase?'pin':'up',isBase?'基':String(i+1)));});
+  pMarks.forEach((mm,i)=>{mm.marker.setIcon(icon('m'+(i+1),i===0));});
   drawWindAxis();updatePHUD();}
 function clearPMarks(){pMarks.forEach(m=>pMap.removeLayer(m.marker));pMarks=[];
   if(windAxisLayer){pMap.removeLayer(windAxisLayer);windAxisLayer=null;}updatePHUD();}
