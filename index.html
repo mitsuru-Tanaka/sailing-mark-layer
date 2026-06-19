@@ -287,7 +287,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
   <div class="mapwrap">
     <div id="pmap" class="lmap"></div>
     <div class="hud">
-      <div class="h-cell"><div class="h-lbl">最終マークまで</div><div class="h-val" id="p-dist">—</div></div>
+      <div class="h-cell"><div class="h-lbl">選択マークまで</div><div class="h-val" id="p-dist">—</div></div>
       <div class="h-cell"><div class="h-lbl">方位</div><div class="h-val" id="p-brng">—</div></div>
       <div class="h-cell"><div class="h-lbl">GPS精度</div><div class="h-val" id="p-acc">—</div></div>
     </div>
@@ -298,17 +298,29 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     </div>
   </div>
   <div class="dock">
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <select id="p-course" onchange="pCourseChange()" style="flex:1;padding:11px;font-size:15px;font-weight:700;border:2px solid var(--line);border-radius:12px;">
+        <option value="lr">上下</option>
+        <option value="trapezoid">トラペゾイド</option>
+        <option value="triangle">トライアングル</option>
+      </select>
+      <select id="p-mark" style="flex:1;padding:11px;font-size:15px;font-weight:700;border:2px solid var(--line);border-radius:12px;"></select>
+    </div>
     <div class="wind-row">
       <svg class="wind-dial" id="wind-dial" viewBox="0 0 56 56"><circle cx="28" cy="28" r="26" fill="#F8FAFC" stroke="#D4DEE7" stroke-width="2"/><g id="wind-arrow"><path d="M28 8 L34 26 L28 22 L22 26 Z" fill="#FF6B1A"/></g></svg>
       <div class="wind-info"><div class="wlbl">風軸（コンパス）</div><div class="wval"><span id="wind-val">0</span><small>°</small></div></div>
       <div class="wind-steps"><button onclick="windStep(-5)">−</button><button onclick="windStep(5)">+</button></div>
     </div>
     <input type="range" class="wind-slider" id="wind-slider" min="0" max="359" value="0" oninput="setWind(+this.value)">
-    <div class="dock-btns">
-      <button class="b-mark" onclick="markHere()">現在地にマーク</button>
-      <button class="b-undo" onclick="undoPMark()">1つ戻す</button>
-      <button class="b-clear" onclick="clearPMarks()">クリア</button>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+      <label style="flex:1;font-weight:700;font-size:15px;"><span id="p-dist-lbl">距離</span> <input type="number" id="p-dist-in" value="700" oninput="pRedraw()" style="width:90px;padding:8px;font-size:15px;border:2px solid var(--line);border-radius:10px;"> m</label>
+      <label style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;"><input type="checkbox" id="p-windauto">2点目で風軸自動</label>
     </div>
+    <div class="dock-btns">
+      <button class="b-mark" onclick="pRegister()">現在地をこのマークに登録</button>
+      <button class="b-clear" onclick="pReset()">リセット</button>
+    </div>
+    <div id="p-status" style="margin-top:8px;font-size:13px;color:var(--muted,#667);font-weight:600;">コース・現在地のマーク・風軸・距離を設定し、登録してください</div>
   </div>
 </div>
 
@@ -336,7 +348,7 @@ const CHART_BOUNDS=[[35.246665,139.464602],[35.312631,139.578253]];
 let mode='home';
 let raceMap=null,pMap=null,watchId=null,currentPos=null;
 let courseMarks=[],rLayers=[],rGps=null,rGpsC=null;
-let pMarks=[],pLayers=[],pGps=null,pGpsC=null,windAxisLayer=null,windDeg=0;
+let pCourse=[],pLayers=[],pGps=null,pGpsC=null,windDeg=0;
 let chartImg=null; // shared dataURL
 let rChart=null,pChart=null;
 
@@ -448,18 +460,18 @@ function onCourseChange(){
   REFOPTS[v].forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
   updateUnitLabels();recalc();
 }
-function unitSelId(){const v=curType();
+function unitSelId(v){v=v||curType();
   if(v==='trapezoid'||v==='trapo')return 'trap-unit';
   if(v==='triangle'||v==='trio')return 'tri-unit';
   if(v==='lr')return 'lr-unit'; if(v==='wlo')return 'wlo-unit'; return null;}
-function isNM(){const id=unitSelId();return id?document.getElementById(id).value==='nm':false;}
+function isNM(v){const id=unitSelId(v),el=id&&document.getElementById(id);return el?el.value==='nm':false;}
 function updateUnitLabels(){const u=isNM()?'nm':'m';document.querySelectorAll('.udist').forEach(el=>el.textContent=u);}
 function getRef(){return{lat:dmin(val('ref-latd'),document.getElementById('ref-latm').value),lon:dmin(val('ref-lond'),document.getElementById('ref-lonm').value)};}
 
 function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,txt:MARK_CODE[kind]||txt};}
 
-function calcMarks(){
-  const type=curType(),ref=getRef(),refMk=document.getElementById('refMark').value,k=isNM()?1852:1;
+function calcMarks(refOv,typeOv,refMkOv){
+  const type=typeOv||curType(),ref=refOv||getRef(),refMk=refMkOv||document.getElementById('refMark').value,k=isNM(type)?1852:1;
   let marks=[],basisMap={};
   // 全コースを反時計回り(ポート回り)で生成する。各 dest の方位を風軸(W)で左右反射 β→2W−β する D で包む。
   // これにより 風上=上, スタートライン=右, サイドマーク=左 の標準レイアウトになる。
@@ -587,6 +599,12 @@ function applyRef(pos){
 }
 
 /* ==================== PRACTICE ==================== */
+/* GPS基準でコースを打つ。コース種類×現在地マークを選び登録→そのマークを基準にコース描画。
+   2点目を登録すると、実測した2マーク間の距離で基準距離を更新(風軸は任意で自動判定)。 */
+const PWIND={trapezoid:'p-wind',triangle:'t-wind',lr:'lr-wind'};
+const PDIST={trapezoid:'p-d14',triangle:'t-d13',lr:'lr-d'};
+const PDLBL={trapezoid:'1-4距離',triangle:'1-3距離',lr:'上-下距離'};
+let pAnchors=[];   // [{mk,lat,lon}] 登録済み基準(最大2)
 function initPMap(){
   if(pMap){pMap.invalidateSize();return;}
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
@@ -594,47 +612,67 @@ function initPMap(){
   L.control.zoom({position:'topright'}).addTo(pMap);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(pMap);
   addChart('p');
-  pMap.on('click',e=>addPMark(e.latlng.lat,e.latlng.lng));
+  pCourseChange();
+}
+function pType(){return document.getElementById('p-course').value;}
+function pCourseChange(){
+  const t=pType(),sel=document.getElementById('p-mark');sel.innerHTML='';
+  REFOPTS[t].forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
+  document.getElementById('p-dist-lbl').textContent=PDLBL[t];
+  document.getElementById('p-dist-in').value=val(PDIST[t]);
+  pAnchors=[];pDraw();
 }
 function setWind(v){windDeg=(v+360)%360;document.getElementById('wind-val').textContent=Math.round(windDeg);
   document.getElementById('wind-slider').value=windDeg;
   document.getElementById('wind-arrow').setAttribute('transform','rotate('+windDeg+' 28 28)');
-  drawWindAxis();}
+  pRedraw();}
 function windStep(d){setWind(windDeg+d);}
-function addPMark(lat,lon){
-  const n=pMarks.length+1;
-  const m={lat,lon,n};
-  const isBase=pMarks.length===0;
-  m.marker=L.marker([lat,lon],{icon:icon(String(n),isBase),draggable:true}).addTo(pMap);
-  m.marker.on('dragend',ev=>{const ll=ev.target.getLatLng();m.lat=ll.lat;m.lon=ll.lng;drawWindAxis();updatePHUD();});
-  pMarks.push(m);
-  drawWindAxis();updatePHUD();
+function pSyncParams(){const t=pType();
+  document.getElementById(PWIND[t]).value=Math.round(windDeg);
+  document.getElementById(PDIST[t]).value=val('p-dist-in');}
+function pComputeMarks(mk,pos){pSyncParams();return calcMarks(pos,pType(),mk);}
+function pRegister(){
+  if(!currentPos){alert('GPSをONにして現在地を取得してください');return;}
+  const mk=document.getElementById('p-mark').value,pos={lat:currentPos.lat,lon:currentPos.lon};
+  pAnchors=pAnchors.filter(a=>a.mk!==mk);   // 同マーク再登録は上書き
+  pAnchors.push({mk,lat:pos.lat,lon:pos.lon});
+  if(pAnchors.length>2)pAnchors=pAnchors.slice(-2);
+  if(pAnchors.length===2)pCalibrate();
+  pDraw();pMap.panTo([pos.lat,pos.lon]);
 }
-function markHere(){
-  if(currentPos){addPMark(currentPos.lat,currentPos.lon);pMap.panTo([currentPos.lat,currentPos.lon]);}
-  else if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{currentPos={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};addPMark(currentPos.lat,currentPos.lon);pMap.panTo([currentPos.lat,currentPos.lon]);},()=>alert('GPS取得失敗。地図をタップしてマークできます'),{enableHighAccuracy:true,timeout:10000});}
-  else alert('GPS不可。地図タップでマークできます');
+function pCalibrate(){
+  const A=pAnchors[0],B=pAnchors[1];
+  const cur=pComputeMarks(A.mk,{lat:A.lat,lon:A.lon});
+  const qA=cur.find(m=>m.id===A.mk),qB=cur.find(m=>m.id===B.mk);
+  if(!qA||!qB)return;
+  const dI=haversine(qA.lat,qA.lon,qB.lat,qB.lon),bI=bearing(qA.lat,qA.lon,qB.lat,qB.lon);
+  const dM=haversine(A.lat,A.lon,B.lat,B.lon),bM=bearing(A.lat,A.lon,B.lat,B.lon);
+  if(dI>1){const el=document.getElementById('p-dist-in');el.value=Math.round(parseFloat(el.value)*dM/dI);}  // 距離=実測比で更新
+  if(document.getElementById('p-windauto').checked)setWind(windDeg+(bM-bI));                                // 風軸=実測方位に
 }
-function undoPMark(){const m=pMarks.pop();if(m)pMap.removeLayer(m.marker);
-  pMarks.forEach((mm,i)=>{mm.marker.setIcon(icon(String(i+1),i===0));});
-  drawWindAxis();updatePHUD();}
-function clearPMarks(){pMarks.forEach(m=>pMap.removeLayer(m.marker));pMarks=[];
-  if(windAxisLayer){pMap.removeLayer(windAxisLayer);windAxisLayer=null;}updatePHUD();}
-function drawWindAxis(){
-  if(windAxisLayer){pMap.removeLayer(windAxisLayer);windAxisLayer=null;}
-  if(!pMarks.length)return;
-  const base=pMarks[0];
-  const up=dest(base.lat,base.lon,windDeg,4000);
-  const dn=dest(base.lat,base.lon,(windDeg+180)%360,4000);
-  windAxisLayer=L.layerGroup().addTo(pMap);
-  L.polyline([[dn.lat,dn.lon],[up.lat,up.lon]],{color:'#FF6B1A',weight:3,opacity:0.45,dashArray:'2,8'}).addTo(windAxisLayer);
-  L.marker([up.lat,up.lon],{icon:L.divIcon({html:'<div style="color:#FF6B1A;font-size:22px;font-weight:800;transform:rotate('+windDeg+'deg);">↑</div>',iconSize:[24,24],iconAnchor:[12,12],className:''})}).addTo(windAxisLayer);
+function pDraw(){
+  pLayers.forEach(l=>pMap.removeLayer(l));pLayers=[];
+  if(!pAnchors.length){pCourse=[];pStatus();updatePHUD();return;}
+  const A=pAnchors[0];pCourse=pComputeMarks(A.mk,{lat:A.lat,lon:A.lon});
+  const lls=pCourse.map(m=>[m.lat,m.lon]),path=pCourse.legs||lls;
+  pLayers.push(L.polyline(path,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:.85}).addTo(pMap));
+  const ids=pAnchors.map(a=>a.mk);
+  pCourse.forEach(m=>{const mk2=L.marker([m.lat,m.lon],{icon:icon(m.txt,ids.includes(m.id))}).addTo(pMap);
+    mk2.bindPopup('<b>'+m.label+'</b><br>'+fmtLL(m.lat)+' / '+fmtLL(m.lon));pLayers.push(mk2);});
+  pStatus();updatePHUD();
 }
+function pRedraw(){if(pAnchors.length)pDraw();}
+function pReset(){pAnchors=[];pLayers.forEach(l=>pMap.removeLayer(l));pLayers=[];pCourse=[];pStatus();updatePHUD();}
+function pStatus(){const el=document.getElementById('p-status');if(!el)return;
+  if(!pAnchors.length){el.textContent='コース・現在地のマーク・風軸・距離を設定し、登録してください';return;}
+  const names=pAnchors.map(a=>{const o=REFOPTS[pType()].find(x=>x[0]===a.mk);return o?o[1]:a.mk;});
+  el.textContent='基準: '+names.join(' / ')+(pAnchors.length<2?'（移動して2点目を登録すると距離が実測で更新）':'（2点で確定）');}
 function updatePHUD(){
-  if(!currentPos||!pMarks.length){document.getElementById('p-dist').textContent='—';document.getElementById('p-brng').textContent='—';return;}
-  const last=pMarks[pMarks.length-1];
-  document.getElementById('p-dist').textContent=fmtD(haversine(currentPos.lat,currentPos.lon,last.lat,last.lon));
-  document.getElementById('p-brng').innerHTML=Math.round(bearing(currentPos.lat,currentPos.lon,last.lat,last.lon))+'<small>°</small>';
+  const e1=document.getElementById('p-dist'),e2=document.getElementById('p-brng');
+  if(!currentPos||!pCourse.length){if(e1)e1.textContent='—';if(e2)e2.textContent='—';return;}
+  const mk=document.getElementById('p-mark').value,t=pCourse.find(m=>m.id===mk)||pCourse[0];
+  e1.textContent=fmtD(haversine(currentPos.lat,currentPos.lon,t.lat,t.lon));
+  e2.innerHTML=Math.round(bearing(currentPos.lat,currentPos.lon,t.lat,t.lon))+'<small>°</small>';
 }
 
 /* ==================== GPS shared ==================== */
