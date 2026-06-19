@@ -151,7 +151,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon prac"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00A3E0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
     <div><h2>練習モード</h2><p>現在地をマークに指定してコースを配置。2点目で距離を実測補正・LINE共有。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #9</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #10</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -476,10 +476,11 @@ function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,
 
 // 基準候補(コース種類×スタートライン有無)。先頭が既定基準。
 function refOpts(type,sl){
+  // 基準候補は実在マークのみ(中央点やFinishは除外＝GPSで立てる点だけ)。先頭が既定基準。
   let o;
-  if(type==='trapezoid')o=[['M4','下ゲート4 中央'],['G4p','4p'],['G4s','4s'],['M1','上マーク 1'],['M2','サイド 2'],['G3p','3p'],['G3s','3s']];
-  else if(type==='triangle')o=[['M4','リーワード 4'],['M1','上マーク 1'],['M2','サイド 2'],['M3','マーク3']];
-  else o=[['GC','下ゲート 中央'],['G2p','2p'],['G2s','2s'],['TOP','上マーク 1']];
+  if(type==='trapezoid')o=[['G4p','下ゲート 4p'],['G4s','下ゲート 4s'],['M1','上マーク 1'],['M2','サイド 2'],['G3p','下ゲート 3p'],['G3s','下ゲート 3s']];
+  else if(type==='triangle')o=[['M1','上マーク 1'],['M2','サイド 2'],['M3','マーク3'],['M4','リーワード 4']];
+  else o=[['G2p','下ゲート 2p'],['G2s','下ゲート 2s'],['TOP','上マーク 1']];
   return sl?[['CB','本船 (スタート)'],['PIN','ピン']].concat(o):o;
 }
 function startOn(){const e=document.getElementById('r-startline');return e?e.checked:true;}
