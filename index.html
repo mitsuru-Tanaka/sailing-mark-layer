@@ -319,6 +319,10 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <button class="b-mark" onclick="pRegister()">現在地をこのマークに登録</button>
       <button class="b-clear" onclick="pReset()">リセット</button>
     </div>
+    <div class="dock-btns" style="margin-top:8px;">
+      <button class="b-mark" style="background:#00B900;" onclick="pShareLINE()">LINEで共有</button>
+      <button class="b-clear" onclick="pCopyLink()">リンクをコピー</button>
+    </div>
     <div id="p-status" style="margin-top:8px;font-size:13px;color:var(--muted,#667);font-weight:600;">コース・現在地のマーク・風軸・距離を設定し、登録してください</div>
   </div>
 </div>
@@ -375,6 +379,10 @@ function goHome(){
   document.getElementById('home').classList.remove('hidden');
   document.getElementById('race').classList.add('hidden');
   document.getElementById('practice').classList.add('hidden');
+  if(pView){pView=false;const d=document.querySelector('#practice .dock');if(d)d.style.display='';
+    const t=document.querySelector('#practice .topbar h2');if(t)t.textContent='練習モード';
+    if(location.hash)history.replaceState(null,'',location.pathname);
+    pLayers.forEach(l=>pMap&&pMap.removeLayer(l));pLayers=[];}
 }
 function raceTab(name,btn){
   ['course','map','list','share'].forEach(n=>document.getElementById('rt-'+n).classList.add('hidden'));
@@ -669,6 +677,33 @@ function updatePHUD(){
   e1.textContent=fmtD(haversine(currentPos.lat,currentPos.lon,t.lat,t.lon));
   e2.innerHTML=Math.round(bearing(currentPos.lat,currentPos.lon,t.lat,t.lon))+'<small>°</small>';
 }
+/* ---- 練習コースの共有(同期なし。リンクを開くと閲覧モードで表示) ---- */
+function pShareUrl(){
+  if(!pCourse.length){alert('先にコースを登録してください');return null;}
+  const data={t:pType(),m:pCourse.map(x=>[x.txt,+x.lat.toFixed(6),+x.lon.toFixed(6)]),g:(pCourse.legs||[]).map(p=>[+p[0].toFixed(6),+p[1].toFixed(6)])};
+  return location.origin+location.pathname+'#v='+encodeURIComponent(JSON.stringify(data));
+}
+function pShareLINE(){const u=pShareUrl();if(u)window.open('https://line.me/R/msg/text/?'+encodeURIComponent('セーリングコース（地図リンク）\n'+u));}
+function pCopyLink(){const u=pShareUrl();if(!u)return;
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(()=>alert('リンクをコピーしました'),()=>prompt('コピーしてください',u));
+  else prompt('コピーしてください',u);}
+let pView=false;
+function checkSharedLink(){
+  const h=location.hash||'',i=h.indexOf('v=');if(i<0)return false;
+  let data;try{data=JSON.parse(decodeURIComponent(h.slice(i+2)));}catch(e){return false;}
+  pView=true;enterMode('practice');
+  const dock=document.querySelector('#practice .dock');if(dock)dock.style.display='none';
+  const ttl=document.querySelector('#practice .topbar h2');if(ttl)ttl.textContent='共有コース';
+  setTimeout(()=>{
+    pLayers.forEach(l=>pMap.removeLayer(l));pLayers=[];
+    if(data.g&&data.g.length)pLayers.push(L.polyline(data.g,{color:'#0A2540',weight:2.5,dashArray:'7,5',opacity:.85}).addTo(pMap));
+    const lls=(data.m||[]).map(x=>[x[1],x[2]]);
+    (data.m||[]).forEach(x=>{const m2=L.marker([x[1],x[2]],{icon:icon(x[0],false)}).addTo(pMap);
+      m2.bindPopup('<b>'+x[0]+'</b><br>'+fmtLL(x[1])+' / '+fmtLL(x[2]));pLayers.push(m2);});
+    if(lls.length)pMap.fitBounds(lls,{padding:[50,50],maxZoom:16});
+  },450);
+  return true;
+}
 
 /* ==================== GPS shared ==================== */
 function toggleGPS(){
@@ -701,6 +736,7 @@ function onGPS(pos){
   updatePHUD();
 }
 function closeSheet(e){if(!e||e.target===document.getElementById('gps-sheet'))document.getElementById('gps-sheet').classList.remove('show');}
+checkSharedLink();   // 共有リンク(#v=...)で開かれた場合は閲覧モードで表示
 </script>
 </body>
 </html>
