@@ -151,7 +151,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon prac"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00A3E0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
     <div><h2>練習モード</h2><p>現在地をマークに指定してコースを配置。2点目で距離を実測補正・LINE共有。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #10</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #11</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -181,7 +181,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <p class="sec-title">トラペゾイド</p>
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="trap-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
-        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('p-wind',-5,0,359,true)">−</button><input type="number" id="p-wind" value="0" oninput="recalc()"><button onclick="step('p-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('p-wind',-5,0,359,true)">−</button><input type="number" id="p-wind" value="0" step="5" oninput="recalc()"><button onclick="step('p-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-4距離</span><div class="stepper"><button onclick="step('p-d14',-50,0,99999)">−</button><input type="number" id="p-d14" value="700" oninput="recalc()"><button onclick="step('p-d14',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">1-2距離比</span><input type="number" id="p-r12" value="66.7" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
         <div class="field"><span class="flbl">2-3距離比</span><input type="number" id="p-r23" value="100" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
@@ -197,7 +197,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <p class="sec-title">トライアングル</p>
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
-        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('t-wind',-5,0,359,true)">−</button><input type="number" id="t-wind" value="0" oninput="recalc()"><button onclick="step('t-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('t-wind',-5,0,359,true)">−</button><input type="number" id="t-wind" value="0" step="5" oninput="recalc()"><button onclick="step('t-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-3距離</span><div class="stepper"><button onclick="step('t-d13',-50,0,99999)">−</button><input type="number" id="t-d13" value="700" oninput="recalc()"><button onclick="step('t-d13',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">3-4距離</span><input type="number" id="t-d34" value="250" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート-4距離</span><input type="number" id="t-s4" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
@@ -211,7 +211,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <p class="sec-title">上下（L/R）</p>
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="lr-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
-        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('lr-wind',-5,0,359,true)">−</button><input type="number" id="lr-wind" value="0" oninput="recalc()"><button onclick="step('lr-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
+        <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('lr-wind',-5,0,359,true)">−</button><input type="number" id="lr-wind" value="0" step="5" oninput="recalc()"><button onclick="step('lr-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
         <div class="field"><span class="flbl">上-下距離</span><div class="stepper"><button onclick="step('lr-d',-100,0,99999)">−</button><input type="number" id="lr-d" value="1500" oninput="recalc()"><button onclick="step('lr-d',100,0,99999)">+</button></div><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート-下距離</span><input type="number" id="lr-sd" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート幅</span><input type="number" id="lr-sw" value="150" oninput="recalc()"><span class="funit udist">m</span></div>
@@ -310,7 +310,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
       <span style="font-size:13px;font-weight:700;">風軸</span>
-      <input type="range" id="wind-slider" min="0" max="359" value="0" oninput="setWind(+this.value)" style="flex:1;accent-color:var(--orange);height:26px;">
+      <input type="range" id="wind-slider" min="0" max="355" step="5" value="0" oninput="setWind(+this.value)" style="flex:1;accent-color:var(--orange);height:26px;">
       <span style="font-size:15px;font-weight:800;min-width:44px;text-align:right;"><span id="wind-val">0</span>°</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -606,7 +606,7 @@ function pCourseChange(){
   document.getElementById('p-dist-in').value=val(PDIST[t]);
   pAnchors=[];pDraw();
 }
-function setWind(v){windDeg=(v+360)%360;const wv=document.getElementById('wind-val');if(wv)wv.textContent=Math.round(windDeg);
+function setWind(v){windDeg=(Math.round(v/5)*5+360)%360;const wv=document.getElementById('wind-val');if(wv)wv.textContent=Math.round(windDeg);
   const ws=document.getElementById('wind-slider');if(ws)ws.value=windDeg;
   const wa=document.getElementById('wind-arrow');if(wa)wa.setAttribute('transform','rotate('+windDeg+' 28 28)');
   pRedraw();}
