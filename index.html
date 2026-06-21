@@ -17,8 +17,17 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="isobath_data.js"></script>
 <style>
+/* ベクター海図のラベル類 */
+.lbl{font-weight:bold;color:#b3122c;font-size:14px;background:transparent;border:none;box-shadow:none;padding:0;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
+.leaflet-tooltip.lbl:before{display:none}
+.harbor{font-size:11px;font-weight:bold;color:#0a3d91;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
+.harbor b{color:#c2185b}
+.place{font-size:13px;font-weight:bold;color:#222;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
+.place.big{font-size:17px;color:#1b5fa8;letter-spacing:2px;opacity:.8}
+.coast{font-size:10px;font-weight:bold;color:#0d6b6b;white-space:nowrap;text-shadow:0 0 2px #fff,0 0 3px #fff,0 0 3px #fff}
+.isolabel{font-size:9px;font-weight:bold;color:#1560a8;white-space:nowrap;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 :root{
   --navy:#0A2540; --navy2:#143A5C; --ink:#0A2540; --paper:#EEF2F6; --card:#FFFFFF;
   --line:#D4DEE7; --muted:#5C7185; --cyan:#00A3E0; --orange:#FF6B1A; --green:#00B368; --red:#E63946;
@@ -160,7 +169,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #19</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #20</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -263,8 +272,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div id="rmap" class="lmap"></div>
     <div class="chartbar">
       <span>海面図</span>
-      <input type="range" id="r-opacity" min="0" max="100" value="55" oninput="setChartOpacity('r',this.value)">
-      <span id="r-opacity-val">55%</span>
+      <input type="range" id="r-opacity" min="0" max="100" value="100" oninput="setChartOpacity('r',this.value)">
+      <span id="r-opacity-val">100%</span>
     </div>
     <div class="hud" style="top:auto;bottom:10px;">
       <div class="h-cell"><div class="h-lbl">最終マークまで</div><div class="h-val" id="r-dist">—</div></div>
@@ -302,8 +311,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     </div>
     <div class="chartbar" style="top:84px;">
       <span>海面図</span>
-      <input type="range" id="p-opacity" min="0" max="100" value="55" oninput="setChartOpacity('p',this.value)">
-      <span id="p-opacity-val">55%</span>
+      <input type="range" id="p-opacity" min="0" max="100" value="100" oninput="setChartOpacity('p',this.value)">
+      <span id="p-opacity-val">100%</span>
     </div>
   </div>
   <div class="dock" id="p-dock" style="padding:8px 12px max(8px,env(safe-area-inset-bottom));">
@@ -460,27 +469,56 @@ function step(id,delta,min,max,wrap){
 }
 
 /* ---------- chart overlay ---------- */
-function ensureChart(cb){
-  if(chartImg){cb();return;}
-  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  pdfjsLib.getDocument(CHART_URL).promise.then(pdf=>pdf.getPage(1)).then(page=>{
-    const vp=page.getViewport({scale:3});const c=document.createElement('canvas');
-    c.width=vp.width;c.height=vp.height;
-    return page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise.then(()=>c);
-  }).then(c=>{chartImg=c.toDataURL('image/png');cb();}).catch(e=>console.error('chart',e));
+/* ===== ベクター海図(等深線GMRT/漁業権/レース海域/ラベル)。元PDFの代替。 ===== */
+const SC_AREAS=[
+ {name:"A",lat:35.2895,lon:139.49,r:850,dkm:1.70,dnm:0.92,depth:25,latdms:"35°17.37'N",londms:"139°29.40'E"},
+ {name:"B1",lat:35.287,lon:139.512,r:850,dkm:1.70,dnm:0.92,depth:20,latdms:"35°17.22'N",londms:"139°30.72'E"},
+ {name:"B2",lat:35.292667,lon:139.528333,r:700,dkm:1.40,dnm:0.76,depth:10,latdms:"35°17.56'N",londms:"139°31.70'E"},
+ {name:"C",lat:35.272,lon:139.483333,r:1000,dkm:2.00,dnm:1.08,depth:65,latdms:"35°16.32'N",londms:"139°29.00'E"},
+ {name:"CX",lat:35.268333,lon:139.5075,r:1000,dkm:2.00,dnm:1.08,depth:60,latdms:"35°16.10'N",londms:"139°30.45'E"},
+ {name:"D",lat:35.282,lon:139.537333,r:700,dkm:1.40,dnm:0.76,depth:20,latdms:"35°16.92'N",londms:"139°32.24'E"},
+ {name:"E",lat:35.279167,lon:139.553333,r:750,dkm:1.50,dnm:0.81,depth:20,latdms:"35°16.75'N",londms:"139°33.20'E"},
+ {name:"F",lat:35.267167,lon:139.542667,r:850,dkm:1.70,dnm:0.92,depth:45,latdms:"35°16.03'N",londms:"139°32.56'E"},
+ {name:"G",lat:35.253333,lon:139.553333,r:800,dkm:1.60,dnm:0.86,depth:40,latdms:"35°15.20'N",londms:"139°33.20'E"}];
+const SC_HARBORS=[["江の島ヨットハーバー",35.3000,139.4823],["腰越漁港",35.3055,139.4905],["逗子マリーナ",35.2932,139.5672],["葉山港",35.2718,139.5795],["葉山マリーナ",35.2762,139.5828],["茅ヶ崎漁港",35.3172,139.4128],["平塚新港",35.3150,139.3470],["大磯港",35.3047,139.3173],["二宮漁港",35.2960,139.2535],["真鶴港",35.1558,139.1432],["福浦漁港",35.1690,139.1480]];
+const SC_PLACES=[["江の島",35.2992,139.4807],["鎌倉",35.3192,139.5520],["逗子",35.2960,139.5790],["葉山",35.2735,139.5870],["茅ヶ崎",35.3300,139.4045],["平塚",35.3280,139.3490],["大磯",35.3075,139.3120],["二宮",35.2995,139.2560],["小田原",35.2560,139.1590],["真鶴",35.1565,139.1530],["相模湾",35.2150,139.4200]];
+const SC_COAST=[["稲村ヶ崎",35.3010,139.5290],["七里ヶ浜",35.3060,139.5160],["小動岬",35.3052,139.4965],["片瀬海岸",35.3060,139.4865],["由比ヶ浜",35.3075,139.5435],["材木座海岸",35.3010,139.5510],["鵠沼海岸",35.3170,139.4715],["辻堂海岸",35.3185,139.4470],["茅ヶ崎海岸",35.3235,139.4150],["姥島(烏帽子岩)",35.3008,139.4088],["長者ヶ崎",35.2628,139.5735],["一色海岸",35.2672,139.5878],["森戸海岸",35.2725,139.5760],["名島",35.2742,139.5678]];
+const SC_TPOLY={"8":[[35.28086,139.52063],[35.28086,139.52083],[35.27987,139.52433],[35.27957,139.52423],[35.27897,139.52393],[35.27847,139.52373],[35.27747,139.52323],[35.27697,139.52303],[35.27677,139.52293],[35.27657,139.52283],[35.27637,139.52273],[35.27587,139.52263],[35.27577,139.52243],[35.27427,139.52183],[35.27467,139.52053],[35.27477,139.52033],[35.27487,139.51993],[35.27507,139.51943],[35.27517,139.51913],[35.27547,139.51823],[35.27557,139.51783],[35.27577,139.51733],[35.27577,139.51693],[35.27587,139.51673],[35.27727,139.51733],[35.27727,139.51753],[35.27677,139.51863],[35.27697,139.51893],[35.27897,139.51973],[35.27907,139.51993],[35.27987,139.52023],[35.28007,139.52033]],"10":[[35.29116,139.47723],[35.29116,139.47743],[35.29026,139.47983],[35.28946,139.47943],[35.28916,139.47923],[35.28876,139.47913],[35.28846,139.47893],[35.28786,139.47863],[35.28756,139.47843],[35.28716,139.47833],[35.28606,139.47773],[35.28576,139.47793],[35.28566,139.47833],[35.28556,139.47863],[35.28526,139.47853],[35.28486,139.47823],[35.28476,139.47823],[35.28406,139.47773],[35.28386,139.47773],[35.28386,139.47763],[35.28406,139.47723],[35.28406,139.47713],[35.28426,139.47683],[35.28426,139.47663],[35.28436,139.47633],[35.28436,139.47613],[35.28456,139.47583],[35.28456,139.47573],[35.28476,139.47533],[35.28476,139.47523],[35.28486,139.47483],[35.28486,139.47473],[35.28506,139.47443],[35.28506,139.47423],[35.28546,139.47333],[35.28546,139.47313],[35.28566,139.47283],[35.28566,139.47263],[35.28576,139.47233],[35.28576,139.47223],[35.28606,139.47143],[35.28776,139.47223],[35.28776,139.47243],[35.28696,139.47483],[35.28706,139.47513]]};
+const SC_KPOLY={"43":[[35.27447,139.56103],[35.27447,139.56123],[35.27327,139.56363],[35.27277,139.56283],[35.27277,139.56263],[35.27377,139.56063]],"44":[[35.27807,139.56793],[35.27417,139.56763],[35.27347,139.56543],[35.27457,139.56473],[35.27477,139.56473],[35.27727,139.56603],[35.27767,139.56633]],"45":[[35.28147,139.56643],[35.28147,139.56653],[35.28127,139.56663],[35.27927,139.56703],[35.27907,139.56603],[35.28127,139.56533],[35.28127,139.56543],[35.28127,139.56573],[35.28137,139.56573],[35.28137,139.56603]],"46":[[35.29077,139.56612],[35.28896,139.56733],[35.28876,139.56733],[35.28557,139.56383],[35.28537,139.56353],[35.28687,139.56293],[35.28746,139.56273]],"47":[[35.30186,139.54483],[35.30186,139.54503],[35.30126,139.54623],[35.30106,139.54643],[35.29996,139.54843],[35.29986,139.54843],[35.29326,139.54243],[35.29316,139.54213],[35.29476,139.53893],[35.29486,139.53873],[35.29496,139.53853],[35.29506,139.53853]],"48":[[35.30516,139.53763],[35.30516,139.53783],[35.30506,139.53813],[35.30466,139.53873],[35.30356,139.54093],[35.30346,139.54113],[35.30326,139.54113],[35.30246,139.54053],[35.30196,139.54023],[35.30186,139.54003],[35.29996,139.53893],[35.29986,139.53873],[35.29806,139.53763],[35.29796,139.53743],[35.29666,139.53673],[35.29656,139.53653],[35.29636,139.53643],[35.29626,139.53633],[35.29626,139.53613],[35.29746,139.53383],[35.29756,139.53363],[35.29766,139.53363]],"49":[[35.29996,139.49953],[35.29906,139.51153],[35.29336,139.51053],[35.29496,139.49873]],"50":[[35.29546,139.47133],[35.29526,139.47213],[35.29516,139.47233],[35.29476,139.47373],[35.29346,139.47313],[35.29356,139.47253],[35.29366,139.47233],[35.29376,139.47173],[35.29406,139.47083],[35.29426,139.47083],[35.29446,139.47093]]};
+const ISO_MAJOR=[-10,-50,-100,-200,-500,-1000,-1500];
+function buildSeaChart(map){
+  if(!map||map._sc)return; map._sc=true;
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',{maxNativeZoom:15,maxZoom:19,attribution:'地理院 色別標高図 / GMRT(海底地形) / 神奈川県 漁業権免許マップ'}).addTo(map);
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',{maxNativeZoom:16,maxZoom:19,opacity:0.3}).addTo(map);
+  map.createPane('scIso');map.getPane('scIso').style.zIndex=350;
+  map.createPane('scPoly');map.getPane('scPoly').style.zIndex=360;
+  map.createPane('scLbl');map.getPane('scLbl').style.zIndex=375;
+  map._scPanes=['scIso','scPoly','scLbl'];
+  if(typeof ISOBATH!=='undefined'){
+    const isoLabel=L.layerGroup();
+    const isoStyle=d=>{const major=ISO_MAJOR.includes(d),t=Math.min(1,Math.log10(-d+1)/Math.log10(1600));return{color:'rgb('+Math.round(200-190*t)+','+Math.round(230-190*t)+','+Math.round(255-135*t)+')',weight:major?1.4:0.6,opacity:major?0.9:0.55};};
+    L.geoJSON(ISOBATH,{pane:'scIso',style:f=>isoStyle(f.properties.depth),onEachFeature:(f,l)=>{const d=f.properties.depth;l.bindTooltip(Math.abs(d)+'m',{sticky:true});if(ISO_MAJOR.includes(d)){const cs=f.geometry.coordinates,m=cs[Math.floor(cs.length/2)];L.marker([m[1],m[0]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'isolabel',html:Math.abs(d)+'m',iconSize:[2,2],iconAnchor:[1,1]})}).addTo(isoLabel);}}}).addTo(map);
+    const upIso=()=>{const z=map.getZoom();if(z>=13){if(!map.hasLayer(isoLabel))map.addLayer(isoLabel);}else if(map.hasLayer(isoLabel))map.removeLayer(isoLabel);};
+    map.on('zoomend',upIso);upIso();
+  }
+  for(const n in SC_TPOLY)L.polygon(SC_TPOLY[n],{pane:'scPoly',color:'#127a12',weight:1.4,fillColor:'#2ecc40',fillOpacity:0.30}).bindTooltip('定第'+n+'号(定置網)',{sticky:true}).addTo(map);
+  for(const n in SC_KPOLY)L.polygon(SC_KPOLY[n],{pane:'scPoly',color:'#c01818',weight:1.2,fillColor:'#ff4136',fillOpacity:0.24}).bindTooltip('区第'+n+'号(区画漁業権)',{sticky:true}).addTo(map);
+  SC_AREAS.forEach(a=>{const c=L.circle([a.lat,a.lon],{pane:'scPoly',radius:a.r,color:'#d21f3c',weight:2,fillColor:'#d21f3c',fillOpacity:0.05});c.addTo(map);c.bindTooltip(a.name,{permanent:true,direction:'center',className:'lbl'});c.bindPopup('<b>レース海域 '+a.name+'</b><br>中心: '+a.latdms+' '+a.londms+'<br>直径: '+a.dkm+'km ('+a.dnm+'nm)<br>水深: '+a.depth+'m');});
+  const harborL=L.layerGroup(),placeL=L.layerGroup(),coastL=L.layerGroup();
+  SC_HARBORS.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'harbor',html:'<b>⚓</b> '+p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(harborL));
+  SC_PLACES.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:p[0]==='相模湾'?'place big':'place',html:p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(placeL));
+  SC_COAST.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'coast',html:'· '+p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(coastL));
+  harborL.addTo(map);
+  const upLbl=()=>{const z=map.getZoom();
+    if(z>=11){if(!map.hasLayer(placeL))map.addLayer(placeL);}else if(map.hasLayer(placeL))map.removeLayer(placeL);
+    if(z>=14){if(!map.hasLayer(coastL))map.addLayer(coastL);}else if(map.hasLayer(coastL))map.removeLayer(coastL);};
+  map.on('zoomend',upLbl);upLbl();
 }
-function addChart(which){
-  ensureChart(()=>{
-    if(which==='r'&&raceMap){if(rChart)raceMap.removeLayer(rChart);
-      rChart=L.imageOverlay(chartImg,CHART_BOUNDS,{opacity:val('r-opacity')/100,interactive:false}).addTo(raceMap);}
-    if(which==='p'&&pMap){if(pChart)pMap.removeLayer(pChart);
-      pChart=L.imageOverlay(chartImg,CHART_BOUNDS,{opacity:val('p-opacity')/100,interactive:false}).addTo(pMap);}
-  });
-}
+function addChart(which){buildSeaChart(which==='r'?raceMap:pMap);}
 function setChartOpacity(which,v){
-  document.getElementById(which+'-opacity-val').textContent=v+'%';
-  if(which==='r'&&rChart)rChart.setOpacity(v/100);
-  if(which==='p'&&pChart)pChart.setOpacity(v/100);
+  const el=document.getElementById(which+'-opacity-val');if(el)el.textContent=v+'%';
+  const map=which==='r'?raceMap:pMap;if(!map||!map._scPanes)return;
+  map._scPanes.forEach(p=>{const pane=map.getPane(p);if(pane)pane.style.opacity=v/100;});
 }
 
 /* ---------- marker icon ---------- */
@@ -591,7 +629,6 @@ function initRMap(){
   if(raceMap){raceMap.invalidateSize();return;}
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
   raceMap=L.map('rmap',{zoomControl:true}).setView(c,13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(raceMap);
   addChart('r');
   if(courseMarks.length)renderRMarks();
 }
@@ -644,7 +681,6 @@ function initPMap(){
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
   pMap=L.map('pmap',{zoomControl:false}).setView(c,14);
   L.control.zoom({position:'topright'}).addTo(pMap);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(pMap);
   addChart('p');
   drawPots();
   pCourseChange();
