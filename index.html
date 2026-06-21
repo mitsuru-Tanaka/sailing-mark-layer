@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mark Layer">
 <meta name="theme-color" content="#0A2540">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -155,7 +158,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #14</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #15</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -532,8 +535,8 @@ function calcMarks(refOv,typeOv,refMkOv,startOv,offOv){
   // スタートラインは風軸の中心線上に。ライン中央(LC)=コースの基準。本船(東)+アウター(西)が中央を挟む。
   function addStart(c,W,gS,gP){const LC=dest(c.lat,c.lon,(W+180)%360,sdDef),CB=dest(LC.lat,LC.lon,gP,swDef/2),OUT=dest(LC.lat,LC.lon,gS,swDef/2);
     basisMap.LC=LC;basisMap.CB=CB;basisMap.OUT=OUT;marks.unshift(mk('CB','本船',CB,'boat','本'),mk('OUT','アウター',OUT,'outer','O'));return LC;}
-  // オフセット = 上マークの左斜め下(風下から45°西側)offDist先。1回航直後に通る。
-  function addOffset(M1,W){const O=dest(M1.lat,M1.lon,(W+180+45)%360,offDist);basisMap.OFF=O;marks.push(mk('OFF','オフセット',O,'offset','os'));
+  // オフセット = 上マークの真横左(風軸の左90°=W+270)offDist先。1回航直後に通る。表示は o。
+  function addOffset(M1,W){const O=dest(M1.lat,M1.lon,(W+270)%360,offDist);basisMap.OFF=O;marks.push(mk('OFF','オフセット',O,'offset','o'));
     for(let i=0;i<legs.length;i++){if(legs[i][0]===M1.lat&&legs[i][1]===M1.lon){legs.splice(i+1,0,P(O));break;}}}
   if(type==='trapezoid'){
     const W=val('p-wind'),d14=val('p-d14')*k,a=d14*val('p-r12')/100,b=d14*val('p-r23')/100;
