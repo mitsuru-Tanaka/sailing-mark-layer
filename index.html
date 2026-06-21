@@ -169,7 +169,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #20</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #21</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -496,14 +496,14 @@ function buildSeaChart(map){
   map._scPanes=['scIso','scPoly','scLbl'];
   if(typeof ISOBATH!=='undefined'){
     const isoLabel=L.layerGroup();
-    const isoStyle=d=>{const major=ISO_MAJOR.includes(d),t=Math.min(1,Math.log10(-d+1)/Math.log10(1600));return{color:'rgb('+Math.round(200-190*t)+','+Math.round(230-190*t)+','+Math.round(255-135*t)+')',weight:major?1.4:0.6,opacity:major?0.9:0.55};};
+    const isoStyle=d=>{const major=ISO_MAJOR.includes(d),t=Math.min(1,Math.log10(-d+1)/Math.log10(1600));return{color:'rgb('+Math.round(70-65*t)+','+Math.round(140-120*t)+','+Math.round(210-135*t)+')',weight:major?1.8:0.9,opacity:major?1:0.8};};
     L.geoJSON(ISOBATH,{pane:'scIso',style:f=>isoStyle(f.properties.depth),onEachFeature:(f,l)=>{const d=f.properties.depth;l.bindTooltip(Math.abs(d)+'m',{sticky:true});if(ISO_MAJOR.includes(d)){const cs=f.geometry.coordinates,m=cs[Math.floor(cs.length/2)];L.marker([m[1],m[0]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'isolabel',html:Math.abs(d)+'m',iconSize:[2,2],iconAnchor:[1,1]})}).addTo(isoLabel);}}}).addTo(map);
     const upIso=()=>{const z=map.getZoom();if(z>=13){if(!map.hasLayer(isoLabel))map.addLayer(isoLabel);}else if(map.hasLayer(isoLabel))map.removeLayer(isoLabel);};
     map.on('zoomend',upIso);upIso();
   }
-  for(const n in SC_TPOLY)L.polygon(SC_TPOLY[n],{pane:'scPoly',color:'#127a12',weight:1.4,fillColor:'#2ecc40',fillOpacity:0.30}).bindTooltip('定第'+n+'号(定置網)',{sticky:true}).addTo(map);
-  for(const n in SC_KPOLY)L.polygon(SC_KPOLY[n],{pane:'scPoly',color:'#c01818',weight:1.2,fillColor:'#ff4136',fillOpacity:0.24}).bindTooltip('区第'+n+'号(区画漁業権)',{sticky:true}).addTo(map);
-  SC_AREAS.forEach(a=>{const c=L.circle([a.lat,a.lon],{pane:'scPoly',radius:a.r,color:'#d21f3c',weight:2,fillColor:'#d21f3c',fillOpacity:0.05});c.addTo(map);c.bindTooltip(a.name,{permanent:true,direction:'center',className:'lbl'});c.bindPopup('<b>レース海域 '+a.name+'</b><br>中心: '+a.latdms+' '+a.londms+'<br>直径: '+a.dkm+'km ('+a.dnm+'nm)<br>水深: '+a.depth+'m');});
+  for(const n in SC_TPOLY)L.polygon(SC_TPOLY[n],{pane:'scPoly',color:'#2a7a2a',weight:1,opacity:0.55,fillColor:'#3ecc4a',fillOpacity:0.13}).bindTooltip('定第'+n+'号(定置網)',{sticky:true}).addTo(map);
+  for(const n in SC_KPOLY)L.polygon(SC_KPOLY[n],{pane:'scPoly',color:'#c43030',weight:1,opacity:0.55,fillColor:'#ff5a50',fillOpacity:0.11}).bindTooltip('区第'+n+'号(区画漁業権)',{sticky:true}).addTo(map);
+  SC_AREAS.forEach(a=>{const c=L.circle([a.lat,a.lon],{pane:'scPoly',radius:a.r,color:'#d21f3c',weight:1,opacity:0.4,fillColor:'#d21f3c',fillOpacity:0.03});c.addTo(map);c.bindTooltip(a.name,{permanent:true,direction:'center',className:'lbl'});c.bindPopup('<b>レース海域 '+a.name+'</b><br>中心: '+a.latdms+' '+a.londms+'<br>直径: '+a.dkm+'km ('+a.dnm+'nm)<br>水深: '+a.depth+'m');});
   const harborL=L.layerGroup(),placeL=L.layerGroup(),coastL=L.layerGroup();
   SC_HARBORS.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'harbor',html:'<b>⚓</b> '+p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(harborL));
   SC_PLACES.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:p[0]==='相模湾'?'place big':'place',html:p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(placeL));
