@@ -169,7 +169,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #21</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #22</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -501,9 +501,9 @@ function buildSeaChart(map){
     const upIso=()=>{const z=map.getZoom();if(z>=13){if(!map.hasLayer(isoLabel))map.addLayer(isoLabel);}else if(map.hasLayer(isoLabel))map.removeLayer(isoLabel);};
     map.on('zoomend',upIso);upIso();
   }
-  for(const n in SC_TPOLY)L.polygon(SC_TPOLY[n],{pane:'scPoly',color:'#2a7a2a',weight:1,opacity:0.55,fillColor:'#3ecc4a',fillOpacity:0.13}).bindTooltip('定第'+n+'号(定置網)',{sticky:true}).addTo(map);
-  for(const n in SC_KPOLY)L.polygon(SC_KPOLY[n],{pane:'scPoly',color:'#c43030',weight:1,opacity:0.55,fillColor:'#ff5a50',fillOpacity:0.11}).bindTooltip('区第'+n+'号(区画漁業権)',{sticky:true}).addTo(map);
-  SC_AREAS.forEach(a=>{const c=L.circle([a.lat,a.lon],{pane:'scPoly',radius:a.r,color:'#d21f3c',weight:1,opacity:0.4,fillColor:'#d21f3c',fillOpacity:0.03});c.addTo(map);c.bindTooltip(a.name,{permanent:true,direction:'center',className:'lbl'});c.bindPopup('<b>レース海域 '+a.name+'</b><br>中心: '+a.latdms+' '+a.londms+'<br>直径: '+a.dkm+'km ('+a.dnm+'nm)<br>水深: '+a.depth+'m');});
+  for(const n in SC_TPOLY)L.polygon(SC_TPOLY[n],{pane:'scPoly',color:'#1e7a1e',weight:1.2,opacity:0.8,fillColor:'#36c842',fillOpacity:0.22}).bindTooltip('定第'+n+'号(定置網)',{sticky:true}).addTo(map);
+  for(const n in SC_KPOLY)L.polygon(SC_KPOLY[n],{pane:'scPoly',color:'#bf2020',weight:1.2,opacity:0.8,fillColor:'#ff483e',fillOpacity:0.19}).bindTooltip('区第'+n+'号(区画漁業権)',{sticky:true}).addTo(map);
+  SC_AREAS.forEach(a=>{const c=L.circle([a.lat,a.lon],{pane:'scPoly',radius:a.r,color:'#d21f3c',weight:1.2,opacity:0.7,fillColor:'#d21f3c',fillOpacity:0.05});c.addTo(map);c.bindTooltip(a.name,{permanent:true,direction:'center',className:'lbl'});c.bindPopup('<b>レース海域 '+a.name+'</b><br>中心: '+a.latdms+' '+a.londms+'<br>直径: '+a.dkm+'km ('+a.dnm+'nm)<br>水深: '+a.depth+'m');});
   const harborL=L.layerGroup(),placeL=L.layerGroup(),coastL=L.layerGroup();
   SC_HARBORS.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:'harbor',html:'<b>⚓</b> '+p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(harborL));
   SC_PLACES.forEach(p=>L.marker([p[1],p[2]],{pane:'scLbl',keyboard:false,icon:L.divIcon({className:p[0]==='相模湾'?'place big':'place',html:p[0],iconSize:[2,2],iconAnchor:[1,1]})}).addTo(placeL));
