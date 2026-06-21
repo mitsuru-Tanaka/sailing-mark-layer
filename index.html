@@ -169,7 +169,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #22</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #23</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -219,11 +219,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
         <div class="field"><span class="flbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
         <div class="field"><span class="flbl">風軸</span><select id="t-wind" class="distsel" data-min="0" data-max="355" data-step="5" data-cur="0" onchange="recalc()"></select><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-3距離</span><select id="t-d13" class="distsel" data-min="100" data-max="2000" data-step="50" data-cur="500" onchange="recalc()"></select><span class="funit udist">m</span></div>
-        <div class="field"><span class="flbl">3-4距離</span><input type="number" id="t-d34" value="250" oninput="recalc()"><span class="funit udist">m</span></div>
-        <div class="field"><span class="flbl">スタート-4距離</span><input type="number" id="t-s4" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">3-1-2内角</span><input type="number" id="t-r312" value="60" oninput="recalc()"><span class="funit">°</span></div>
         <div class="field"><span class="flbl">1-2-3内角</span><input type="number" id="t-r123" value="60" oninput="recalc()"><span class="funit">°</span></div>
-        <div class="field"><span class="flbl">ゲート幅</span><input type="number" id="t-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
       </div>
     </div>
 
@@ -559,7 +556,7 @@ function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,
 function refOpts(type,sl,off){
   let o;
   if(type==='trapezoid')o=[['M4','4ゲート中央'],['G4p','4p'],['G4s','4s'],['G3p','3p'],['G3s','3s'],['M3','3ゲート中央'],['M2','サイド 2'],['M1','上マーク 1'],['FIN','フィニッシュ']];
-  else if(type==='triangle')o=[['M4','リーワード 4'],['M3','マーク3'],['M2','サイド 2'],['M1','上マーク 1'],['FIN','フィニッシュ']];
+  else if(type==='triangle')o=[['M3','マーク3'],['M2','サイド 2'],['M1','上マーク 1'],['FIN','フィニッシュ']];
   else o=[['GC','下ゲート中央'],['G2p','2p'],['G2s','2s'],['TOP','上マーク 1'],['FIN','フィニッシュ']];
   if(off)o=o.concat([['OFF','オフセット']]);
   return sl?[['LC','ライン中央（基準）'],['CB','本船'],['OUT','アウター']].concat(o):o;
@@ -592,14 +589,15 @@ function calcMarks(refOv,typeOv,refMkOv,startOv,offOv){
     legs=[P(st),P(M1),P(M4),P(M1),P(M2),P(M3),P(FIN)];
     if(off)addOffset(M1,W);
   }else if(type==='triangle'){
-    const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),d34=val('t-d34')*k;
+    // 三角形のみ(リーワード無し): 3=風下端(基準)→真上d13に1(上)→1からリーチで2。スタートは3の下、Finishは3の右下。回航 Start-1-2-3-Finish。
+    const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123');
     const ang3=180-r312-r123,L12=d13*Math.sin(rad(ang3))/(Math.sin(rad(r123))||0.001),b12=(W+180+r312)%360,gS=(W+270)%360,gP=(W+90)%360;
-    const M4=ref,M3=dest(M4.lat,M4.lon,W,d34),M1=dest(M3.lat,M3.lon,W,d13),M2=dest(M1.lat,M1.lon,b12,L12);
-    const FIN=dest(M4.lat,M4.lon,(W+120)%360,200*k);
-    basisMap={M4,M3,M1,M2};
-    marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('M3','マーク3',M3,'mark','3'),mk('M4','リーワード (4)',M4,'mark','4'),mk('FIN','フィニッシュ',FIN,'fin','F')];
-    let st=M4;if(sl)st=addStart(M4,W,gS,gP);
-    legs=[P(st),P(M1),P(M2),P(M3),P(M1),P(M4),P(FIN)];
+    const M3=ref,M1=dest(M3.lat,M3.lon,W,d13),M2=dest(M1.lat,M1.lon,b12,L12);
+    const FIN=dest(M3.lat,M3.lon,(W+120)%360,200*k);
+    basisMap={M3,M1,M2};
+    marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('M3','マーク3',M3,'mark','3'),mk('FIN','フィニッシュ',FIN,'fin','F')];
+    let st=M3;if(sl)st=addStart(M3,W,gS,gP);
+    legs=[P(st),P(M1),P(M2),P(M3),P(FIN)];
     if(off)addOffset(M1,W);
   }else{ // lr 上下
     const W=val('lr-wind'),d=val('lr-d')*k,gw=val('lr-gw')*k;
@@ -718,7 +716,7 @@ function pDetailToggle(){const d=document.getElementById('p-detail');
   if(d.classList.contains('hidden')){pRenderDetail();d.classList.remove('hidden');}else d.classList.add('hidden');}
 const PDETAIL={
   trapezoid:[['p-r12','1-2距離比','%'],['p-r23','2-3距離比','%'],['p-r412','4-1-2内角','°'],['p-r123','1-2-3内角','°'],['p-fin','3-Fin距離','m'],['p-r23f','2-3-Fin内角','°'],['p-gw','ゲート間隔','m'],['off-dist','オフセット距離','m']],
-  triangle:[['t-r312','3-1-2内角','°'],['t-r123','1-2-3内角','°'],['t-d34','3-4距離','m'],['t-gw','ゲート幅','m'],['off-dist','オフセット距離','m']],
+  triangle:[['t-r312','3-1-2内角','°'],['t-r123','1-2-3内角','°'],['off-dist','オフセット距離','m']],
   lr:[['lr-sw','スタート幅','m'],['lr-gw','ゲート幅','m'],['lr-sd','スタート-下距離','m'],['off-dist','オフセット距離','m']]};
 function pRenderDetail(){const el=document.getElementById('p-detail'),t=pType();
   el.innerHTML='<div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;">詳細（他のマーク間距離・角度）</div>'+
