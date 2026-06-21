@@ -155,7 +155,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #13</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #14</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -179,6 +179,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <div class="opt"><label><input type="radio" name="course" value="trapezoid" onchange="onCourseChange()">トラペゾイド</label></div>
       <div class="opt"><label><input type="radio" name="course" value="triangle" onchange="onCourseChange()">トライアングル</label></div>
       <div class="opt" style="border-top:1px solid var(--line);"><label><input type="checkbox" id="r-startline" checked onchange="onCourseChange()"><b>スタートライン（本船＋ピン）を入れる</b></label></div>
+      <div class="opt"><label><input type="checkbox" id="r-offset" onchange="onCourseChange()"><b>オフセット（1の先）を入れる</b></label></div>
+      <div class="field"><span class="flbl">オフセット距離</span><select id="off-dist" class="distsel" data-min="5" data-max="50" data-step="5" data-cur="15" onchange="recalc()"></select><span class="funit udist">m</span></div>
     </div>
 
     <div id="sec-trap">
@@ -309,7 +311,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <select id="p-mark" style="flex:1.25;padding:9px;font-size:14px;font-weight:700;border:2px solid var(--line);border-radius:10px;"></select>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;font-weight:600;">
-      <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-startline" onchange="pCourseChange()">スタートライン</label>
+      <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-startline" onchange="pCourseChange()">スタート</label>
+      <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-offset" onchange="pCourseChange()">オフセット</label>
       <label style="margin-left:auto;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="p-windauto">2点目で風軸自動</label>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -495,7 +498,7 @@ function onCourseChange(){
   document.getElementById('sec-tri').classList.toggle('hidden',v!=='triangle');
   document.getElementById('sec-lr').classList.toggle('hidden',v!=='lr');
   const sel=document.getElementById('refMark');sel.innerHTML='';
-  refOpts(v,startOn()).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
+  refOpts(v,startOn(),offsetOn()).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
   updateUnitLabels();recalc();
 }
 function unitSelId(v){v=v||curType();
@@ -508,23 +511,30 @@ function getRef(){return{lat:dmin(val('ref-latd'),document.getElementById('ref-l
 
 function mk(id,label,pos,kind,txt){return{id,label,lat:pos.lat,lon:pos.lon,kind,txt:MARK_CODE[kind]||txt};}
 
-// 基準候補(コース種類×スタートライン有無)。先頭が既定基準。
-function refOpts(type,sl){
-  // 基準候補は実在マークのみ(中央点やFinishは除外＝GPSで立てる点だけ)。先頭が既定基準。
+// 基準候補(コース種類×スタートライン有無×オフセット)。先頭が既定基準。中央点・ライン中央も含む。
+function refOpts(type,sl,off){
   let o;
-  if(type==='trapezoid')o=[['G4p','下ゲート 4p'],['G4s','下ゲート 4s'],['M1','上マーク 1'],['M2','サイド 2'],['G3p','下ゲート 3p'],['G3s','下ゲート 3s']];
-  else if(type==='triangle')o=[['M1','上マーク 1'],['M2','サイド 2'],['M3','マーク3'],['M4','リーワード 4']];
-  else o=[['G2p','下ゲート 2p'],['G2s','下ゲート 2s'],['TOP','上マーク 1']];
-  return sl?[['CB','本船 (スタート)'],['PIN','ピン']].concat(o):o;
+  if(type==='trapezoid')o=[['M4','4ゲート中央'],['G4p','4p'],['G4s','4s'],['G3p','3p'],['G3s','3s'],['M3','3ゲート中央'],['M2','サイド 2'],['M1','上マーク 1'],['FIN','フィニッシュ']];
+  else if(type==='triangle')o=[['M4','リーワード 4'],['M3','マーク3'],['M2','サイド 2'],['M1','上マーク 1'],['FIN','フィニッシュ']];
+  else o=[['GC','下ゲート中央'],['G2p','2p'],['G2s','2s'],['TOP','上マーク 1'],['FIN','フィニッシュ']];
+  if(off)o=o.concat([['OFF','オフセット']]);
+  return sl?[['LC','ライン中央（基準）'],['CB','本船'],['OUT','アウター']].concat(o):o;
 }
 function startOn(){const e=document.getElementById('r-startline');return e?e.checked:true;}
-function calcMarks(refOv,typeOv,refMkOv,startOv){
+function offsetOn(){const e=document.getElementById('r-offset');return e?e.checked:false;}
+function calcMarks(refOv,typeOv,refMkOv,startOv,offOv){
   const type=typeOv||curType(),ref=refOv||getRef(),refMk=refMkOv||document.getElementById('refMark').value,k=isNM(type)?1852:1;
-  const sl=(startOv===undefined||startOv===null)?startOn():startOv;
+  const sl=(startOv==null)?startOn():startOv;
+  const off=(offOv==null)?offsetOn():offOv;
+  const offDist=(val('off-dist')||15)*k,sdDef=200*k,swDef=150*k;
   let marks=[],basisMap={},legs=[];
   const P=o=>[o.lat,o.lon];
-  const sdDef=200*k,swDef=150*k;   // スタートライン(本船-風下距離/スタート幅)の既定
-  // 全コース反時計回り。ゲート s=西(左)/p=東(右)。回航マーク+Finishは常に生成し、slで本船+ピンを付加。
+  // スタートラインは風軸の中心線上に。ライン中央(LC)=コースの基準。本船(東)+アウター(西)が中央を挟む。
+  function addStart(c,W,gS,gP){const LC=dest(c.lat,c.lon,(W+180)%360,sdDef),CB=dest(LC.lat,LC.lon,gP,swDef/2),OUT=dest(LC.lat,LC.lon,gS,swDef/2);
+    basisMap.LC=LC;basisMap.CB=CB;basisMap.OUT=OUT;marks.unshift(mk('CB','本船',CB,'boat','本'),mk('OUT','アウター',OUT,'outer','O'));return LC;}
+  // オフセット = 上マークの左斜め下(風下から45°西側)offDist先。1回航直後に通る。
+  function addOffset(M1,W){const O=dest(M1.lat,M1.lon,(W+180+45)%360,offDist);basisMap.OFF=O;marks.push(mk('OFF','オフセット',O,'offset','os'));
+    for(let i=0;i<legs.length;i++){if(legs[i][0]===M1.lat&&legs[i][1]===M1.lon){legs.splice(i+1,0,P(O));break;}}}
   if(type==='trapezoid'){
     const W=val('p-wind'),d14=val('p-d14')*k,a=d14*val('p-r12')/100,b=d14*val('p-r23')/100;
     const r412=val('p-r412'),r123=val('p-r123'),gw=val('p-gw')*k;
@@ -533,35 +543,36 @@ function calcMarks(refOv,typeOv,refMkOv,startOv){
     const G4s=dest(M4.lat,M4.lon,gS,gw/2),G4p=dest(M4.lat,M4.lon,gP,gw/2),G3s=dest(M3.lat,M3.lon,gS,gw/2),G3p=dest(M3.lat,M3.lon,gP,gw/2);
     const dFin=val('p-fin')*k,r23f=val('p-r23f'),b3f=(b23+180+r23f)%360,FIN=dest(G3p.lat,G3p.lon,b3f,dFin);
     basisMap={M4,M1,M2,M3,G4s,G4p,G3s,G3p};
-    marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','リーチング (2)',M2,'side','横'),mk('G4s','下ゲート 4s',G4s,'gate','4s'),mk('G4p','下ゲート 4p',G4p,'gate','4p'),mk('G3s','下ゲート 3s',G3s,'gate','3s'),mk('G3p','下ゲート 3p',G3p,'gate','3p'),mk('FIN','フィニッシュ',FIN,'fin','F')];
-    legs=[P(M4),P(M1),P(M4),P(M1),P(M2),P(M3),P(FIN)];
-    if(sl){const CB=dest(M4.lat,M4.lon,(W+180)%360,sdDef),PIN=dest(CB.lat,CB.lon,gS,swDef);basisMap.CB=CB;basisMap.PIN=PIN;
-      marks.unshift(mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'));legs[0]=P(CB);}
+    marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('G4s','下ゲート 4s',G4s,'gate','4s'),mk('G4p','下ゲート 4p',G4p,'gate','4p'),mk('G3s','下ゲート 3s',G3s,'gate','3s'),mk('G3p','下ゲート 3p',G3p,'gate','3p'),mk('FIN','フィニッシュ',FIN,'fin','F')];
+    let st=M4;if(sl)st=addStart(M4,W,gS,gP);
+    legs=[P(st),P(M1),P(M4),P(M1),P(M2),P(M3),P(FIN)];
+    if(off)addOffset(M1,W);
   }else if(type==='triangle'){
     const W=val('t-wind'),d13=val('t-d13')*k,r312=val('t-r312'),r123=val('t-r123'),d34=val('t-d34')*k;
-    const ang3=180-r312-r123,L12=d13*Math.sin(rad(ang3))/(Math.sin(rad(r123))||0.001),b12=(W+180+r312)%360,gS=(W+270)%360;
+    const ang3=180-r312-r123,L12=d13*Math.sin(rad(ang3))/(Math.sin(rad(r123))||0.001),b12=(W+180+r312)%360,gS=(W+270)%360,gP=(W+90)%360;
     const M4=ref,M3=dest(M4.lat,M4.lon,W,d34),M1=dest(M3.lat,M3.lon,W,d13),M2=dest(M1.lat,M1.lon,b12,L12);
     const FIN=dest(M4.lat,M4.lon,(W+120)%360,200*k);
     basisMap={M4,M3,M1,M2};
     marks=[mk('M1','上マーク (1)',M1,'up','上'),mk('M2','サイド (2)',M2,'side','横'),mk('M3','マーク3',M3,'mark','3'),mk('M4','リーワード (4)',M4,'mark','4'),mk('FIN','フィニッシュ',FIN,'fin','F')];
-    legs=[P(M4),P(M1),P(M2),P(M3),P(M1),P(M4),P(FIN)];
-    if(sl){const CB=dest(M4.lat,M4.lon,(W+180)%360,sdDef),PIN=dest(CB.lat,CB.lon,gS,swDef);basisMap.CB=CB;basisMap.PIN=PIN;
-      marks.unshift(mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'));legs[0]=P(CB);}
+    let st=M4;if(sl)st=addStart(M4,W,gS,gP);
+    legs=[P(st),P(M1),P(M2),P(M3),P(M1),P(M4),P(FIN)];
+    if(off)addOffset(M1,W);
   }else{ // lr 上下
-    const W=val('lr-wind'),d=val('lr-d')*k,sw=val('lr-sw')*k,gw=val('lr-gw')*k,sd=val('lr-sd')*k;
+    const W=val('lr-wind'),d=val('lr-d')*k,gw=val('lr-gw')*k;
     const gS=(W+270)%360,gP=(W+90)%360;
     const G=ref,TOP=dest(G.lat,G.lon,W,d),G2s=dest(G.lat,G.lon,gS,gw/2),G2p=dest(G.lat,G.lon,gP,gw/2);
     const FIN=dest(G2p.lat,G2p.lon,(W+120)%360,150*k);
     basisMap={GC:G,TOP,G2s,G2p};
     marks=[mk('TOP','上マーク (1)',TOP,'up','上'),mk('G2s','下ゲート 2s',G2s,'gate','2s'),mk('G2p','下ゲート 2p',G2p,'gate','2p'),mk('FIN','フィニッシュ',FIN,'fin','F')];
-    legs=[P(G),P(TOP),P(G),P(FIN)];
-    if(sl){const CB=dest(G.lat,G.lon,(W+180)%360,sd),PIN=dest(CB.lat,CB.lon,gS,sw);basisMap.CB=CB;basisMap.PIN=PIN;
-      marks.unshift(mk('CB','本船 (スタート)',CB,'boat','本'),mk('PIN','ピン',PIN,'pin','P'));legs=[P(CB),P(TOP),P(G),P(TOP),P(G),P(FIN)];}
+    if(sl){const LC=addStart(G,W,gS,gP);legs=[P(LC),P(TOP),P(G),P(TOP),P(G),P(FIN)];}
+    else legs=[P(G),P(TOP),P(G),P(FIN)];
+    if(off)addOffset(TOP,W);
   }
   marks.legs=legs;
-  const basis=basisMap[refMk]||basisMap[refOpts(type,sl)[0][0]];
-  if(basis){const dLat=ref.lat-basis.lat,dLon=ref.lon-basis.lon;marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});
-    marks.legs=marks.legs.map(p=>[p[0]+dLat,p[1]+dLon]);}
+  const basis=basisMap[refMk]||basisMap[refOpts(type,sl,off)[0][0]];
+  let dLat=0,dLon=0;
+  if(basis){dLat=ref.lat-basis.lat;dLon=ref.lon-basis.lon;marks.forEach(m=>{m.lat+=dLat;m.lon+=dLon;});marks.legs=marks.legs.map(p=>[p[0]+dLat,p[1]+dLon]);}
+  marks._ref={};for(const kk in basisMap)marks._ref[kk]={lat:basisMap[kk].lat+dLat,lon:basisMap[kk].lon+dLon};
   const lg=marks.legs;
   marks.sort((a,b)=>(a.id===refMk?-1:b.id===refMk?1:0));
   marks.legs=lg;
@@ -634,9 +645,10 @@ function initPMap(){
 }
 function pType(){return document.getElementById('p-course').value;}
 function pStartOn(){const e=document.getElementById('p-startline');return e?e.checked:false;}
+function pOffOn(){const e=document.getElementById('p-offset');return e?e.checked:false;}
 function pCourseChange(){
   const t=pType(),sel=document.getElementById('p-mark');sel.innerHTML='';
-  refOpts(t,pStartOn()).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
+  refOpts(t,pStartOn(),pOffOn()).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
   document.getElementById('p-dist-lbl').textContent=PDLBL[t];
   ensureOpt('p-dist-in',val(PDIST[t]));
   pAnchors=[];pDraw();
@@ -649,7 +661,7 @@ function windStep(d){setWind(windDeg+d);}
 function pSyncParams(){const t=pType();
   document.getElementById(PWIND[t]).value=Math.round(windDeg);
   document.getElementById(PDIST[t]).value=val('p-dist-in');}
-function pComputeMarks(mk,pos){pSyncParams();return calcMarks(pos,pType(),mk,pStartOn());}
+function pComputeMarks(mk,pos){pSyncParams();return calcMarks(pos,pType(),mk,pStartOn(),pOffOn());}
 function pRegister(){
   if(!currentPos){alert('GPSをONにして現在地を取得してください');return;}
   const mk=document.getElementById('p-mark').value,pos={lat:currentPos.lat,lon:currentPos.lon};
@@ -661,8 +673,8 @@ function pRegister(){
 }
 function pCalibrate(){
   const A=pAnchors[0],B=pAnchors[1];
-  const cur=pComputeMarks(A.mk,{lat:A.lat,lon:A.lon});
-  const qA=cur.find(m=>m.id===A.mk),qB=cur.find(m=>m.id===B.mk);
+  const cur=pComputeMarks(A.mk,{lat:A.lat,lon:A.lon}),rf=cur._ref||{};
+  const qA=rf[A.mk]||cur.find(m=>m.id===A.mk),qB=rf[B.mk]||cur.find(m=>m.id===B.mk);
   if(!qA||!qB)return;
   const dI=haversine(qA.lat,qA.lon,qB.lat,qB.lon),bI=bearing(qA.lat,qA.lon,qB.lat,qB.lon);
   const dM=haversine(A.lat,A.lon,B.lat,B.lon),bM=bearing(A.lat,A.lon,B.lat,B.lon);
