@@ -155,7 +155,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #12</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #13</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -186,7 +186,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="trap-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
         <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('p-wind',-5,0,359,true)">−</button><input type="number" id="p-wind" value="0" step="5" oninput="recalc()"><button onclick="step('p-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
-        <div class="field"><span class="flbl">1-4距離</span><div class="stepper"><button onclick="step('p-d14',-50,0,99999)">−</button><input type="number" id="p-d14" value="700" oninput="recalc()"><button onclick="step('p-d14',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">1-4距離</span><select id="p-d14" class="distsel" data-min="100" data-max="2000" data-step="50" data-cur="700" onchange="recalc()"></select><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">1-2距離比</span><input type="number" id="p-r12" value="66.7" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
         <div class="field"><span class="flbl">2-3距離比</span><input type="number" id="p-r23" value="100" step="0.1" oninput="recalc()"><span class="funit">%</span></div>
         <div class="field"><span class="flbl">4-1-2内角</span><input type="number" id="p-r412" value="60" oninput="recalc()"><span class="funit">°</span></div>
@@ -202,7 +202,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="tri-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
         <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('t-wind',-5,0,359,true)">−</button><input type="number" id="t-wind" value="0" step="5" oninput="recalc()"><button onclick="step('t-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
-        <div class="field"><span class="flbl">1-3距離</span><div class="stepper"><button onclick="step('t-d13',-50,0,99999)">−</button><input type="number" id="t-d13" value="700" oninput="recalc()"><button onclick="step('t-d13',50,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">1-3距離</span><select id="t-d13" class="distsel" data-min="100" data-max="2000" data-step="50" data-cur="700" onchange="recalc()"></select><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">3-4距離</span><input type="number" id="t-d34" value="250" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート-4距離</span><input type="number" id="t-s4" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">3-1-2内角</span><input type="number" id="t-r312" value="60" oninput="recalc()"><span class="funit">°</span></div>
@@ -216,7 +216,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <div class="card">
         <div class="field"><span class="flbl">距離の単位</span><select id="lr-unit" onchange="recalc()"><option value="m">m（メートル）</option><option value="nm">nm（海里）</option></select></div>
         <div class="field"><span class="flbl">風軸</span><div class="stepper"><button onclick="step('lr-wind',-5,0,359,true)">−</button><input type="number" id="lr-wind" value="0" step="5" oninput="recalc()"><button onclick="step('lr-wind',5,0,359,true)">+</button></div><span class="funit">°</span></div>
-        <div class="field"><span class="flbl">上-下距離</span><div class="stepper"><button onclick="step('lr-d',-100,0,99999)">−</button><input type="number" id="lr-d" value="1500" oninput="recalc()"><button onclick="step('lr-d',100,0,99999)">+</button></div><span class="funit udist">m</span></div>
+        <div class="field"><span class="flbl">上-下距離</span><select id="lr-d" class="distsel" data-min="100" data-max="3000" data-step="50" data-cur="1500" onchange="recalc()"></select><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート-下距離</span><input type="number" id="lr-sd" value="200" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">スタート幅</span><input type="number" id="lr-sw" value="150" oninput="recalc()"><span class="funit udist">m</span></div>
         <div class="field"><span class="flbl">ゲート幅</span><input type="number" id="lr-gw" value="50" oninput="recalc()"><span class="funit udist">m</span></div>
@@ -319,7 +319,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
       <span id="p-dist-lbl" style="font-size:13px;font-weight:700;">距離</span>
-      <input type="number" id="p-dist-in" value="700" oninput="pRedraw()" style="width:78px;padding:7px;font-size:14px;border:2px solid var(--line);border-radius:8px;"><span style="font-size:13px;">m</span>
+      <select id="p-dist-in" class="distsel" data-min="100" data-max="3000" data-step="50" data-cur="700" onchange="pRedraw()" style="padding:7px;font-size:14px;border:2px solid var(--line);border-radius:8px;"></select><span style="font-size:13px;">m</span>
       <button class="b-mark" onclick="pRegister()" style="margin-left:auto;flex:0 0 auto;padding:11px 16px;">現在地を登録</button>
     </div>
     <div class="dock-btns">
@@ -435,6 +435,13 @@ function bearing(la1,lo1,la2,lo2){const dO=rad(lo2-lo1);
 function fmtD(m){return m>=1000?(m/1000).toFixed(2)+'km':Math.round(m)+'m';}
 function dmin(d,m){return parseFloat(d)+parseFloat(m)/60;}
 function val(id){return +document.getElementById(id).value;}
+// 距離プルダウン(海上でキーボード不要)。data-min/max/stepから選択肢生成。
+function fillDistSelects(){document.querySelectorAll('select.distsel').forEach(s=>{if(s.options.length)return;
+  const mn=+s.dataset.min,mx=+s.dataset.max,st=+s.dataset.step,cur=+s.dataset.cur;let h='';
+  for(let v=mn;v<=mx+0.001;v+=st)h+='<option value="'+v+'">'+v+'</option>';s.innerHTML=h;s.value=cur;});}
+function ensureOpt(id,v){const sel=document.getElementById(id);if(!sel)return;v=Math.round(v);
+  if(![...sel.options].some(o=>+o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);}
+  sel.value=v;}
 function fmtLL(v){const D=Math.floor(v);return D+'°'+((v-D)*60).toFixed(4)+"'";}
 
 function step(id,delta,min,max,wrap){
@@ -631,7 +638,7 @@ function pCourseChange(){
   const t=pType(),sel=document.getElementById('p-mark');sel.innerHTML='';
   refOpts(t,pStartOn()).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
   document.getElementById('p-dist-lbl').textContent=PDLBL[t];
-  document.getElementById('p-dist-in').value=val(PDIST[t]);
+  ensureOpt('p-dist-in',val(PDIST[t]));
   pAnchors=[];pDraw();
 }
 function setWind(v){windDeg=(Math.round(v/5)*5+360)%360;const wv=document.getElementById('wind-val');if(wv)wv.textContent=Math.round(windDeg);
@@ -659,7 +666,7 @@ function pCalibrate(){
   if(!qA||!qB)return;
   const dI=haversine(qA.lat,qA.lon,qB.lat,qB.lon),bI=bearing(qA.lat,qA.lon,qB.lat,qB.lon);
   const dM=haversine(A.lat,A.lon,B.lat,B.lon),bM=bearing(A.lat,A.lon,B.lat,B.lon);
-  if(dI>1){const el=document.getElementById('p-dist-in');el.value=Math.round(parseFloat(el.value)*dM/dI);}  // 距離=実測比で更新
+  if(dI>1)ensureOpt('p-dist-in',parseFloat(document.getElementById('p-dist-in').value)*dM/dI);  // 距離=実測比で更新
   if(document.getElementById('p-windauto').checked)setWind(windDeg+(bM-bI));                                // 風軸=実測方位に
 }
 function pDraw(){
@@ -836,6 +843,7 @@ function onGPS(pos){
   updatePHUD();
 }
 function closeSheet(e){if(!e||e.target===document.getElementById('gps-sheet'))document.getElementById('gps-sheet').classList.remove('show');}
+fillDistSelects();   // 距離プルダウンの選択肢を生成
 checkSharedLink();   // 共有リンク(#v=...)で開かれた場合は閲覧モードで表示
 </script>
 </body>
