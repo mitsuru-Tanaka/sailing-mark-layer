@@ -151,7 +151,11 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon prac"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00A3E0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
     <div><h2>練習モード</h2><p>現在地をマークに指定してコースを配置。2点目で距離を実測補正・LINE共有。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #11</div>
+  <div class="mode-card" onclick="openHistory()">
+    <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+    <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
+  </div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-19 #12</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -319,12 +323,27 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <button class="b-mark" onclick="pRegister()" style="margin-left:auto;flex:0 0 auto;padding:11px 16px;">現在地を登録</button>
     </div>
     <div class="dock-btns">
+      <button class="b-mark" style="background:#7B2FF7;" onclick="pSaveCourse()">履歴保存</button>
+      <button class="b-clear" onclick="pSavePot()">蛸壺</button>
+      <button class="b-mark" style="background:#00B900;" onclick="pShareLINE()">共有</button>
       <button class="b-clear" onclick="pReset()">リセット</button>
-      <button class="b-mark" style="background:#00B900;" onclick="pShareLINE()">LINE共有</button>
-      <button class="b-clear" onclick="pCopyLink()">リンク</button>
     </div>
     <div id="p-status" style="margin-top:6px;font-size:12px;color:var(--muted,#667);font-weight:600;">コース・マーク・風軸・距離を設定して登録</div>
   </div>
+</div>
+
+<!-- ============ HISTORY ============ -->
+<div id="history" class="screen hidden">
+  <div class="topbar">
+    <button class="back" onclick="goHome()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h2>履歴・お気に入り</h2>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="ht-all" onclick="histTab('all',this)">すべて</button>
+    <button class="tab" id="ht-fav" onclick="histTab('fav',this)">お気に入り</button>
+    <button class="tab" id="ht-pot" onclick="histTab('pot',this)">蛸壺</button>
+  </div>
+  <div class="scroll" id="hist-list" style="padding:12px 14px;"></div>
 </div>
 
 <!-- GPS sheet -->
@@ -369,8 +388,10 @@ const REFOPTS={
 function enterMode(m){
   mode=m;
   document.getElementById('home').classList.add('hidden');
+  document.getElementById('history').classList.add('hidden');
   document.getElementById('race').classList.toggle('hidden',m!=='race');
   document.getElementById('practice').classList.toggle('hidden',m!=='practice');
+  if(!pView&&typeof hideShareActions==='function')hideShareActions();
   if(m==='race'){onCourseChange();}
   if(m==='practice'){setTimeout(initPMap,60);}
 }
@@ -379,11 +400,17 @@ function goHome(){
   document.getElementById('home').classList.remove('hidden');
   document.getElementById('race').classList.add('hidden');
   document.getElementById('practice').classList.add('hidden');
+  document.getElementById('history').classList.add('hidden');
   if(pView){pView=false;const d=document.querySelector('#practice .dock');if(d)d.style.display='';
     const t=document.querySelector('#practice .topbar h2');if(t)t.textContent='練習モード';
     if(location.hash)history.replaceState(null,'',location.pathname);
     pLayers.forEach(l=>pMap&&pMap.removeLayer(l));pLayers=[];}
 }
+function openHistory(){mode='history';
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('race').classList.add('hidden');
+  document.getElementById('practice').classList.add('hidden');
+  document.getElementById('history').classList.remove('hidden');histTab('all',document.getElementById('ht-all'));}
 function raceTab(name,btn){
   ['course','map','list','share'].forEach(n=>document.getElementById('rt-'+n).classList.add('hidden'));
   document.querySelectorAll('#race .tab').forEach(t=>t.classList.remove('active'));
@@ -595,6 +622,7 @@ function initPMap(){
   L.control.zoom({position:'topright'}).addTo(pMap);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19}).addTo(pMap);
   addChart('p');
+  drawPots();
   pCourseChange();
 }
 function pType(){return document.getElementById('p-course').value;}
@@ -669,10 +697,11 @@ function pCopyLink(){const u=pShareUrl();if(!u)return;
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(()=>alert('リンクをコピーしました'),()=>prompt('コピーしてください',u));
   else prompt('コピーしてください',u);}
 let pView=false;
+let pSharedData=null;
 function checkSharedLink(){
   const h=location.hash||'',i=h.indexOf('v=');if(i<0)return false;
   let data;try{data=JSON.parse(decodeURIComponent(h.slice(i+2)));}catch(e){return false;}
-  pView=true;enterMode('practice');
+  pView=true;pSharedData=data;enterMode('practice');
   const dock=document.querySelector('#practice .dock');if(dock)dock.style.display='none';
   const ttl=document.querySelector('#practice .topbar h2');if(ttl)ttl.textContent='共有コース';
   setTimeout(()=>{
@@ -681,10 +710,100 @@ function checkSharedLink(){
     const lls=(data.m||[]).map(x=>[x[1],x[2]]);
     (data.m||[]).forEach(x=>{const m2=L.marker([x[1],x[2]],{icon:icon(x[0],false)}).addTo(pMap);
       m2.bindPopup('<b>'+x[0]+'</b><br>'+fmtLL(x[1])+' / '+fmtLL(x[2]));pLayers.push(m2);});
+    pCourse=(data.m||[]).map(x=>({txt:x[0],lat:x[1],lon:x[2],id:x[0],label:x[0]}));pCourse.legs=data.g||[];
     if(lls.length)pMap.fitBounds(lls,{padding:[50,50],maxZoom:16});
+    showShareActions();
   },450);
   return true;
 }
+function showShareActions(){
+  let bar=document.getElementById('share-actions');
+  if(!bar){bar=document.createElement('div');bar.id='share-actions';
+    bar.style.cssText='position:absolute;left:0;right:0;bottom:0;z-index:600;display:flex;gap:8px;padding:12px 14px max(12px,env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 20px rgba(10,37,64,0.1);';
+    bar.innerHTML='<button class="b-mark" style="background:#7B2FF7;" onclick="saveSharedToHistory()">履歴に保存</button><button class="b-mark" onclick="editSharedInPractice()">練習で編集</button>';
+    document.getElementById('practice').appendChild(bar);}
+  bar.style.display='flex';
+}
+function hideShareActions(){const b=document.getElementById('share-actions');if(b)b.style.display='none';}
+function saveSharedToHistory(){if(pSharedData)saveCourseItem({type:pSharedData.t,marks:pSharedData.m,legs:pSharedData.g||[]});}
+function editSharedInPractice(){
+  pView=false;hideShareActions();
+  const d=document.querySelector('#practice .dock');if(d)d.style.display='';
+  const t=document.querySelector('#practice .topbar h2');if(t)t.textContent='練習（共有を編集）';
+  if(location.hash)history.replaceState(null,'',location.pathname);
+  if(pSharedData&&pSharedData.t)document.getElementById('p-course').value=pSharedData.t;
+  alert('共有コースを土台に編集できます。「履歴保存」「共有」で残せます。マークを置き直すと再計算されます。');
+}
+
+/* ---- 端末ローカル保存(履歴・お気に入り・蛸壺)。同期なし、この端末内のみ ---- */
+function lsGet(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v||d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function getCourses(){return lsGet('ml_courses',[]);}
+function setCoursesLS(a){lsSet('ml_courses',a);}
+function getPots(){return lsGet('ml_pots',[]);}
+function setPotsLS(a){lsSet('ml_pots',a);}
+function fmtTs(t){const d=new Date(t),p=n=>('0'+n).slice(-2);return (d.getMonth()+1)+'/'+d.getDate()+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function courseJa(t){return({lr:'上下',trapezoid:'トラペ',triangle:'トライアングル'})[t]||t;}
+function ctrOf(m){const la=m.reduce((s,x)=>s+x[1],0)/m.length,lo=m.reduce((s,x)=>s+x[2],0)/m.length;return[+la.toFixed(6),+lo.toFixed(6)];}
+function saveCourseItem(o){
+  if(!o.marks||!o.marks.length){alert('保存するコースがありません');return;}
+  const now=Date.now(),item={id:'c'+now,ts:now,type:o.type,marks:o.marks,legs:o.legs||[],center:ctrOf(o.marks),fav:false,note:o.note||'',title:fmtTs(now)+' '+courseJa(o.type)};
+  const a=getCourses();a.unshift(item);setCoursesLS(a);alert('履歴に保存しました\n'+item.title);
+}
+function pSaveCourse(){
+  if(!pCourse||!pCourse.length){alert('先にコースを登録してください');return;}
+  saveCourseItem({type:pType(),marks:pCourse.map(m=>[m.txt,+m.lat.toFixed(6),+m.lon.toFixed(6)]),legs:(pCourse.legs||[]).map(p=>[+p[0].toFixed(6),+p[1].toFixed(6)])});
+}
+let potLayer=null;
+function pSavePot(){
+  if(!currentPos){alert('GPSをONにして現在地を取得してください');return;}
+  const a=getPots();a.push({id:'p'+Date.now(),ts:Date.now(),lat:+currentPos.lat.toFixed(6),lon:+currentPos.lon.toFixed(6),note:''});setPotsLS(a);
+  drawPots();alert('蛸壺（危険物）の位置を保存しました');
+}
+function drawPots(){
+  if(!pMap)return;
+  if(potLayer){pMap.removeLayer(potLayer);potLayer=null;}
+  const pots=getPots();if(!pots.length)return;
+  potLayer=L.layerGroup().addTo(pMap);
+  pots.forEach(p=>L.marker([p.lat,p.lon],{icon:L.divIcon({html:'<div style="width:16px;height:16px;background:#E63946;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 1px 3px rgba(0,0,0,.4);"></div>',iconSize:[18,18],iconAnchor:[9,9],className:''})}).bindPopup('蛸壺/危険物<br>'+fmtLL(p.lat)+' / '+fmtLL(p.lon)+(p.note?'<br>'+p.note:'')).addTo(potLayer));
+}
+/* ---- 履歴画面 ---- */
+let histFilter='all';
+function histTab(f,btn){histFilter=f;['ht-all','ht-fav','ht-pot'].forEach(id=>document.getElementById(id).classList.remove('active'));if(btn)btn.classList.add('active');renderHist();}
+function esc(s){return(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function renderHist(){
+  const el=document.getElementById('hist-list');
+  if(histFilter==='pot'){
+    const pots=getPots().slice().reverse();
+    el.innerHTML=pots.length?'':'<p style="color:var(--muted);padding:24px;text-align:center;">蛸壺の記録はありません<br>練習モードの「蛸壺」ボタンで現在地を記録</p>';
+    pots.forEach(p=>{const d=document.createElement('div');d.className='card';d.style.cssText='padding:14px;margin-bottom:10px;';
+      d.innerHTML='<div style="font-weight:700;">🟥 蛸壺 '+fmtTs(p.ts||0)+'</div><div style="font-size:13px;color:var(--muted);margin:4px 0;">'+fmtLL(p.lat)+' / '+fmtLL(p.lon)+'</div>';
+      const note=document.createElement('input');note.value=p.note||'';note.placeholder='メモ';note.style.cssText='width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;margin:4px 0;font-size:14px;';
+      note.onchange=()=>{const a=getPots(),it=a.find(x=>x.id===p.id);if(it){it.note=note.value;setPotsLS(a);}};
+      const del=document.createElement('button');del.textContent='削除';del.className='b-clear';
+      del.onclick=()=>{if(confirm('削除しますか?')){setPotsLS(getPots().filter(x=>x.id!==p.id));renderHist();}};
+      d.appendChild(note);d.appendChild(del);el.appendChild(d);});
+    return;
+  }
+  let list=getCourses();if(histFilter==='fav')list=list.filter(c=>c.fav);
+  el.innerHTML=list.length?'':'<p style="color:var(--muted);padding:24px;text-align:center;">'+(histFilter==='fav'?'お気に入りはありません':'保存した履歴はありません<br>練習モードの「履歴保存」で記録')+'</p>';
+  list.forEach(c=>{const d=document.createElement('div');d.className='card';d.style.cssText='padding:14px;margin-bottom:10px;';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><b style="flex:1;font-size:15px;">'+esc(c.title)+'</b><span style="cursor:pointer;font-size:22px;color:#F4A300;" onclick="toggleFav(\''+c.id+'\')">'+(c.fav?'★':'☆')+'</span></div>'+
+      '<div style="font-size:13px;color:var(--muted);margin:4px 0;">'+courseJa(c.type)+' ・ '+c.marks.length+'マーク ・ '+fmtLL(c.center[0])+' / '+fmtLL(c.center[1])+'</div>';
+    const note=document.createElement('input');note.value=c.note||'';note.placeholder='メモ（風向・触りやすさ・気づき等）';note.style.cssText='width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;margin:6px 0;font-size:14px;';
+    note.onchange=()=>{const a=getCourses(),it=a.find(x=>x.id===c.id);if(it){it.note=note.value;setCoursesLS(a);}};
+    const row=document.createElement('div');row.className='dock-btns';
+    row.innerHTML='<button class="b-mark" onclick="viewCourse(\''+c.id+'\')">地図で見る</button><button class="b-mark" style="background:#00B900;" onclick="shareCourse(\''+c.id+'\')">共有</button><button class="b-clear" onclick="delCourse(\''+c.id+'\')">削除</button>';
+    d.appendChild(note);d.appendChild(row);el.appendChild(d);});
+}
+function toggleFav(id){const a=getCourses(),it=a.find(x=>x.id===id);if(it){it.fav=!it.fav;setCoursesLS(a);renderHist();}}
+function delCourse(id){if(confirm('この履歴を削除しますか?')){setCoursesLS(getCourses().filter(x=>x.id!==id));renderHist();}}
+function viewCourse(id){const c=getCourses().find(x=>x.id===id);if(!c)return;
+  document.getElementById('history').classList.add('hidden');
+  location.hash='v='+encodeURIComponent(JSON.stringify({t:c.type,m:c.marks,g:c.legs}));checkSharedLink();}
+function shareCourse(id){const c=getCourses().find(x=>x.id===id);if(!c)return;
+  const u=location.origin+location.pathname+'#v='+encodeURIComponent(JSON.stringify({t:c.type,m:c.marks,g:c.legs}));
+  window.open('https://line.me/R/msg/text/?'+encodeURIComponent('セーリングコース（地図リンク）\n'+u));}
 
 /* ==================== GPS shared ==================== */
 function toggleGPS(){
