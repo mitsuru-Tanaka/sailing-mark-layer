@@ -170,7 +170,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #24</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #25</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -629,7 +629,7 @@ function calcAndMap(){recalc();raceTab('map',document.querySelectorAll('#race .t
 function initRMap(){
   if(raceMap){raceMap.invalidateSize();return;}
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
-  raceMap=L.map('rmap',{zoomControl:true,rotate:true,touchRotate:true,rotateControl:{closeOnZeroBearing:false},bearing:0}).setView(c,13);
+  raceMap=L.map('rmap',{zoomControl:true,rotate:true,touchRotate:true,rotateControl:{closeOnZeroBearing:false},bearing:0,zoomAnimation:false,markerZoomAnimation:false}).setView(c,13);
   addChart('r');
   if(courseMarks.length)renderRMarks();
 }
@@ -680,7 +680,7 @@ let pAnchors=[];   // [{mk,lat,lon}] 登録済み基準(最大2)
 function initPMap(){
   if(pMap){pMap.invalidateSize();return;}
   const c=[(CHART_BOUNDS[0][0]+CHART_BOUNDS[1][0])/2,(CHART_BOUNDS[0][1]+CHART_BOUNDS[1][1])/2];
-  pMap=L.map('pmap',{zoomControl:false,rotate:true,touchRotate:true,rotateControl:{closeOnZeroBearing:false},bearing:0}).setView(c,14);
+  pMap=L.map('pmap',{zoomControl:false,rotate:true,touchRotate:true,rotateControl:{closeOnZeroBearing:false},bearing:0,zoomAnimation:false,markerZoomAnimation:false}).setView(c,14);
   L.control.zoom({position:'topright'}).addTo(pMap);
   addChart('p');
   drawPots();
