@@ -170,7 +170,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #26</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #27</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -486,8 +486,10 @@ const SC_KPOLY={"43":[[35.27447,139.56103],[35.27447,139.56123],[35.27327,139.56
 const ISO_MAJOR=[-10,-50,-100,-200,-500,-1000,-1500];
 function buildSeaChart(map){
   if(!map||map._sc)return; map._sc=true;
-  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',{maxNativeZoom:15,maxZoom:19,attribution:'地理院 色別標高図 / GMRT(海底地形) / 神奈川県 漁業権免許マップ'}).addTo(map);
-  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',{maxNativeZoom:16,maxZoom:19,opacity:0.3}).addTo(map);
+  // updateWhenZooming:false → ピンチ/ズーム中はタイルを別レベルへ再投影せず現レベルをそのままスケール。
+  // これでベクタ(等深線/漁業権/レース円)のレンダラと基準ズームが一致し、ジェスチャー中も一緒にスケールして浮かない。
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',{maxNativeZoom:15,maxZoom:19,updateWhenZooming:false,attribution:'地理院 色別標高図 / GMRT(海底地形) / 神奈川県 漁業権免許マップ'}).addTo(map);
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',{maxNativeZoom:16,maxZoom:19,updateWhenZooming:false,opacity:0.3}).addTo(map);
   // 回転プラグイン対応: 海図paneはrotatePane内に作り、ベース地図と一緒に回転＆divIconラベルが正しく描画されるようにする
   const _rp=(map.getPane&&map.getPane('rotatePane'))||null;
   map.createPane('scIso',_rp);map.getPane('scIso').style.zIndex=350;
