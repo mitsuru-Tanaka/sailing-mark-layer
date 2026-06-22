@@ -170,7 +170,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #25</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #26</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -316,7 +316,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
   <div class="dock" id="p-dock" style="padding:8px 12px max(8px,env(safe-area-inset-bottom));">
     <div style="display:flex;align-items:center;gap:8px;">
       <button onclick="pDockToggle()" id="p-handle" title="開閉" style="border:none;background:#EEF2F6;border-radius:8px;font-size:15px;color:var(--muted);cursor:pointer;padding:9px 11px;line-height:1;">▾</button>
-      <button class="b-mark" onclick="pRegister()" style="flex:1;padding:11px;">現在地を登録</button>
+      <button class="b-mark" onclick="pRegister()" style="flex:1;padding:11px;">現在地をRefに設定</button>
     </div>
     <div id="p-body" style="margin-top:8px;">
       <div style="display:flex;gap:6px;margin-bottom:6px;">
@@ -328,8 +328,8 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12.5px;font-weight:600;flex-wrap:wrap;">
         <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-startline" onchange="pToggleChange()">スタート</label>
         <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-offset" onchange="pToggleChange()">オフセット</label>
-        <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-2nd">2点目</label>
-        <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-windauto">風軸自動</label>
+        <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-2nd">Ref追加</label>
+        <label style="display:flex;align-items:center;gap:3px;"><input type="checkbox" id="p-windauto">風軸更新</label>
         <button onclick="pDetailToggle()" style="margin-left:auto;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;">詳細</button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;font-weight:700;">
