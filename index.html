@@ -174,7 +174,7 @@ pre.share{font-size:13px;color:var(--ink);padding:14px;line-height:1.7;white-spa
     <div class="mc-icon" style="background:#E9E2FB;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7B2FF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
     <div><h2>履歴・お気に入り</h2><p>練習コースを時刻・場所付きで保存。メモ・お気に入り・蛸壺も記録。</p></div>
   </div>
-  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-06-22 #29</div>
+  <div style="margin-top:18px;font-size:12px;color:var(--muted);text-align:center;">build 2026-11-10c</div>
 </div>
 
 <!-- ============ RACE ============ -->
@@ -1098,10 +1098,10 @@ checkSharedLink();   // 共有リンク(#v=...)で開かれた場合は閲覧モ
 </script>
 <!-- 更新チェック: ホーム画面アプリは古い版を開き続けるため、version.json と比べて新しい版があれば知らせる -->
 <div id="upd-banner" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:99999;background:#FF6B1A;color:#fff;font-weight:700;padding:10px 16px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:14px">新しい版があります — タップで更新</div>
-<div id="app-ver" style="position:fixed;right:6px;bottom:calc(env(safe-area-inset-bottom) + 2px);z-index:99998;font-size:9px;color:rgba(255,255,255,.45);pointer-events:none">v2026-11-10b</div>
+<div id="app-ver" style="position:fixed;right:6px;bottom:calc(env(safe-area-inset-bottom) + 2px);z-index:99998;font-size:9px;color:rgba(255,255,255,.45);pointer-events:none">v2026-11-10c</div>
 <script>
 (function(){
-  const APP_VERSION='2026-11-10b';
+  const APP_VERSION='2026-11-10c';
   const banner=document.getElementById('upd-banner');
   banner.onclick=function(){location.replace(location.pathname+'?v='+Date.now());};
   function checkUpdate(){
